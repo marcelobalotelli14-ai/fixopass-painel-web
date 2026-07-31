@@ -1,7 +1,5 @@
-const CACHE_NAME = 'fixopass-v1';
+const CACHE_NAME = 'fixopass-v2';
 const ASSETS = [
-  './',
-  './index.html',
   './manifest.json',
   './logo-fixopass.png',
   './hero-fixopass.png',
@@ -29,6 +27,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
+  // Navigations (the HTML shell) always go to the network first, so a new
+  // deploy is visible immediately. Falls back to cache only when offline.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Static assets: cache-first, refreshed in the background.
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const network = fetch(event.request)
