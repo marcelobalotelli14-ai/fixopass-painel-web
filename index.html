@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>FIXO PASS — Seus dados, na hora certa.</title>
 <meta name="description" content="O FIXO PASS conecta você e a empresa de forma rápida, segura e autorizada. Cadastre seus dados uma vez, compartilhe em segundos via NFC ou QR Code." />
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f141c">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FixoPass">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -545,6 +552,16 @@
     </div>
   </div>
 </footer>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function (err) {
+        console.warn('Falha ao registrar o service worker:', err);
+      });
+    });
+  }
+</script>
 
 </body>
 </html>
