@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FIXO PASS — Cadastre uma vez. Compartilhe em segundos.</title>
+<meta name="description" content="FIXO PASS é a ponte entre você e as empresas: cadastre seus dados uma vez e compartilhe com autorização, via NFC ou QR Code. Sem fila, sem ficha, sem erro de digitação." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #10151b;
+    --surface: #1a2129;
+    --surface-2: #212b35;
+    --border: #2e3944;
+    --text: #ece8df;
+    --text-dim: #8b96a1;
+    --accent: #e3a23d;
+    --accent-ink: #2a1d08;
+    --deny: #c1554b;
+    --radius: 14px;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --max: 1080px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: -0.01em; margin: 0; }
+  code, .mono { font-family: var(--font-mono); }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+  section { padding: 96px 0; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 14px; display: block;
+  }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 24px; border-radius: 8px; font-weight: 600; font-size: 15px;
+    cursor: pointer; border: 1px solid transparent; transition: filter .15s ease, transform .08s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-ghost:hover { background: var(--surface-2); }
+
+  /* ---------- Nav ---------- */
+  header {
+    position: sticky; top: 0; z-index: 40; background: rgba(16,21,27,0.85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav.wrap { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 32px; height: 32px; border-radius: 8px; background: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-display);
+    font-weight: 700; color: var(--accent-ink); font-size: 14px;
+  }
+  .brand-name { font-size: 16px; font-weight: 600; }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a { font-size: 14px; color: var(--text-dim); }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta { display: flex; align-items: center; gap: 12px; }
+  .mobile-toggle { display: none; background: none; border: none; color: var(--text); font-size: 22px; cursor: pointer; }
+
+  @media (max-width: 800px) {
+    .nav-links, .nav-cta .btn-ghost { display: none; }
+    .mobile-toggle { display: block; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 72px 0 40px; }
+  .hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 56px; align-items: center; }
+  @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } }
+  .hero h1 { font-size: clamp(32px, 5vw, 52px); line-height: 1.08; margin-bottom: 20px; }
+  .hero h1 .accent-word { color: var(--accent); }
+  .hero p.lede { color: var(--text-dim); font-size: 17px; line-height: 1.6; max-width: 480px; margin-bottom: 32px; }
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+  .hero-note { color: var(--text-dim); font-size: 12px; }
+
+  /* Signature: ticket mockup showing the "you choose what's shared" idea */
+  .ticket-demo {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5);
+  }
+  .ticket-demo-top { padding: 22px 22px 18px; display: flex; align-items: center; justify-content: space-between; }
+  .ticket-demo-company { font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+  .ticket-demo-badge {
+    font-family: var(--font-mono); font-size: 10px; color: var(--accent); border: 1px solid var(--accent);
+    border-radius: 20px; padding: 3px 8px;
+  }
+  .ticket-demo-perf { border-top: 1px dashed var(--border); margin: 0 22px; position: relative; }
+  .ticket-demo-perf::before, .ticket-demo-perf::after {
+    content: ''; position: absolute; top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--bg);
+  }
+  .ticket-demo-perf::before { left: -31px; }
+  .ticket-demo-perf::after { right: -31px; }
+  .ticket-demo-fields { padding: 18px 22px 22px; }
+  .field-row {
+    display: flex; align-items: center; justify-content: space-between; padding: 9px 0;
+    border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-status { font-family: var(--font-mono); font-size: 11px; padding: 3px 9px; border-radius: 20px; }
+  .field-status.on { background: rgba(227,162,61,0.15); color: var(--accent); border: 1px solid var(--accent); }
+  .field-status.off { background: rgba(193,85,75,0.1); color: #ffb3ab; border: 1px solid var(--deny); }
+
+  /* ---------- Como funciona ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 48px; }
+  @media (max-width: 800px) { .steps { grid-template-columns: 1fr; } }
+  .step { border-top: 2px solid var(--accent); padding-top: 20px; }
+  .step-num { font-family: var(--font-mono); color: var(--accent); font-size: 13px; margin-bottom: 10px; display: block; }
+  .step h3 { font-size: 19px; margin-bottom: 10px; }
+  .step p { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin: 0; }
+
+  /* ---------- Duas audiências ---------- */
+  .audience-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .audience-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  @media (max-width: 900px) { .audience-grid { grid-template-columns: 1fr; } }
+  .audience-card h2 { font-size: 26px; margin-bottom: 14px; }
+  .audience-card p.intro { color: var(--text-dim); font-size: 15px; margin-bottom: 24px; line-height: 1.6; }
+  .bullet-list { list-style: none; padding: 0; margin: 0 0 28px; }
+  .bullet-list li {
+    display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text);
+  }
+  .bullet-list li:last-child { border-bottom: none; }
+  .bullet-list li .dot { color: var(--accent); font-weight: 700; }
+
+  .pricing-card {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-top: 8px;
+  }
+  .pricing-price { font-family: var(--font-display); font-size: 32px; font-weight: 700; }
+  .pricing-price span { font-size: 15px; color: var(--text-dim); font-weight: 500; }
+  .pricing-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 16px; }
+
+  /* ---------- Segurança ---------- */
+  .security-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 40px; }
+  @media (max-width: 900px) { .security-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .security-grid { grid-template-columns: 1fr; } }
+  .security-item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;
+  }
+  .security-item .icon { color: var(--accent); font-family: var(--font-display); font-size: 20px; margin-bottom: 10px; display: block; }
+  .security-item h4 { font-size: 14px; margin-bottom: 6px; }
+  .security-item p { color: var(--text-dim); font-size: 13px; margin: 0; line-height: 1.5; }
+
+  .disclaimer-band {
+    border: 1px solid var(--deny); background: rgba(193,85,75,0.08); border-radius: var(--radius);
+    padding: 22px 24px; margin-top: 40px; font-size: 13px; color: #f0c2bc; line-height: 1.7;
+  }
+  .disclaimer-band strong { color: #ffb3ab; }
+
+  /* ---------- CTA final ---------- */
+  .final-cta { text-align: center; }
+  .final-cta h2 { font-size: 34px; margin-bottom: 16px; }
+  .final-cta p { color: var(--text-dim); font-size: 15px; margin-bottom: 32px; }
+  .final-cta .hero-ctas { justify-content: center; }
+
+  footer { border-top: 1px solid var(--border); padding: 32px 0; }
+  .footer-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .footer-row .brand-name { color: var(--text-dim); font-size: 13px; }
+  .footer-links { display: flex; gap: 20px; font-size: 13px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <div class="brand">
+      <div class="brand-mark">FP</div>
+      <div class="brand-name">FIXO PASS</div>
+    </div>
+    <div class="nav-links">
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#empresas">Para empresas</a>
+      <a href="#pessoas">Para você</a>
+      <a href="#seguranca">Segurança</a>
+    </div>
+    <div class="nav-cta">
+      <a href="#" class="btn btn-ghost">Entrar</a>
+      <a href="#empresas" class="btn btn-primary">Cadastrar empresa</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">Compartilhamento de dados autorizado</span>
+        <h1>Cadastre seus dados <span class="accent-word">uma vez</span>. Compartilhe em segundos, quando você decidir.</h1>
+        <p class="lede">
+          FIXO PASS é a ponte entre você e as empresas — elimina cadastro manual, fila e erro
+          de digitação, usando o NFC ou a câmera do seu próprio celular. Nada muda no sistema
+          da empresa: ele só recebe os dados que você autorizou.
+        </p>
+        <div class="hero-ctas">
+          <a href="#empresas" class="btn btn-primary">Cadastrar minha empresa</a>
+          <a href="#como-funciona" class="btn btn-ghost">Ver como funciona</a>
+        </div>
+        <span class="hero-note">Não é um documento digital. Não substitui RG, CPF, CNH ou qualquer documento oficial.</span>
+      </div>
+
+      <div class="ticket-demo">
+        <div class="ticket-demo-top">
+          <span class="ticket-demo-company">Bella Pizza</span>
+          <span class="ticket-demo-badge">SOLICITAÇÃO</span>
+        </div>
+        <div class="ticket-demo-perf"></div>
+        <div class="ticket-demo-fields">
+          <div class="field-row"><span>Nome</span><span class="field-status on">liberado</span></div>
+          <div class="field-row"><span>Telefone</span><span class="field-status on">liberado</span></div>
+          <div class="field-row"><span>Endereço</span><span class="field-status on">liberado</span></div>
+          <div class="field-row"><span>CPF</span><span class="field-status off">bloqueado</span></div>
+          <div class="field-row"><span>RG</span><span class="field-status off">bloqueado</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section id="como-funciona">
+    <div class="wrap">
+      <span class="eyebrow">Como funciona</span>
+      <h2 style="font-size: 30px;">Três passos, do jeito que já é rápido pra você.</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">01</span>
+          <h3>Cadastre uma vez</h3>
+          <p>Nome, telefone, e-mail, CPF, RG, endereço — tudo guardado com você, no app.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">02</span>
+          <h3>Aproxime ou escaneie</h3>
+          <p>Encoste o celular no NFC da empresa, ou leia o QR Code no balcão/recepção.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">03</span>
+          <h3>Você aprova, pronto</h3>
+          <p>Só os dados que você liberar chegam no sistema da empresa — na hora, sem formulário.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DUAS AUDIÊNCIAS -->
+  <section class="audience-section">
+    <div class="wrap audience-grid">
+      <!-- EMPRESAS -->
+      <div class="audience-card" id="empresas">
+        <span class="eyebrow">Para empresas</span>
+        <h2>Menos fila, menos ficha, menos erro de digitação.</h2>
+        <p class="intro">
+          Restaurante, hospital, hotel, condomínio ou loja — cada categoria escolhe
+          exatamente quais dados precisa pedir. Seu sistema continua o mesmo; o FIXO PASS
+          só entrega os dados autorizados, prontos pra usar.
+        </p>
+        <ul class="bullet-list">
+          <li><span class="dot">＋</span> Configure quais campos pedir por categoria de negócio</li>
+          <li><span class="dot">＋</span> API aberta com documentação Swagger, pronta pra qualquer ERP</li>
+          <li><span class="dot">＋</span> Webhook automático assim que o cliente aprova — sem polling manual</li>
+          <li><span class="dot">＋</span> QR Code gerado automaticamente pra cada unidade/filial</li>
+        </ul>
+        <div class="pricing-card">
+          <div class="pricing-price">R$ 29,90<span> /mês</span></div>
+          <div class="pricing-sub">1 unidade · NFC · QR Code · API · integração ERP básica</div>
+          <a href="#" class="btn btn-primary" style="width:100%">Cadastrar minha empresa</a>
+        </div>
+      </div>
+
+      <!-- PESSOAS -->
+      <div class="audience-card" id="pessoas">
+        <span class="eyebrow">Para você</span>
+        <h2>Seus dados, suas regras.</h2>
+        <p class="intro">
+          Você decide o que cada empresa recebe — e pode mudar de ideia quando quiser.
+          Nada sai sem sua autorização explícita, e tudo fica registrado.
+        </p>
+        <ul class="bullet-list">
+          <li><span class="dot">＋</span> Escolha os dados liberados empresa por empresa</li>
+          <li><span class="dot">＋</span> Veja o histórico de tudo que já foi compartilhado</li>
+          <li><span class="dot">＋</span> Revogue o acesso de qualquer empresa a qualquer momento</li>
+          <li><span class="dot">＋</span> Aprove com NFC ou QR Code — sem preencher formulário de novo</li>
+        </ul>
+        <a href="#" class="btn btn-ghost" style="width:100%; text-align:center;">Baixar o app</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEGURANÇA -->
+  <section id="seguranca">
+    <div class="wrap">
+      <span class="eyebrow">Segurança e confiança</span>
+      <h2 style="font-size: 30px;">Consentimento em primeiro lugar, sempre.</h2>
+      <div class="security-grid">
+        <div class="security-item">
+          <span class="icon">✓</span>
+          <h4>Consentimento obrigatório</h4>
+          <p>Nenhum dado sai sem você aprovar explicitamente, empresa por empresa.</p>
+        </div>
+        <div class="security-item">
+          <span class="icon">↺</span>
+          <h4>Revogável a qualquer hora</h4>
+          <p>Mudou de ideia? Revogue o acesso de uma empresa quando quiser.</p>
+        </div>
+        <div class="security-item">
+          <span class="icon">▤</span>
+          <h4>Histórico completo</h4>
+          <p>Todo compartilhamento fica registrado — o que, quando e pra quem.</p>
+        </div>
+        <div class="security-item">
+          <span class="icon">◆</span>
+          <h4>Dados protegidos</h4>
+          <p>Informações sensíveis armazenadas com criptografia e controle de acesso.</p>
+        </div>
+      </div>
+
+      <div class="disclaimer-band">
+        <strong>Importante:</strong> o FIXO PASS não é um documento digital e não substitui
+        RG, CPF, CNH ou qualquer documento oficial. Ele também não substitui o sistema da
+        sua empresa — funciona como uma ponte que entrega dados já autorizados, eliminando
+        cadastro manual, fila e erro de digitação.
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="final-cta">
+    <div class="wrap">
+      <h2>Pronto para eliminar o cadastro manual?</h2>
+      <p>Cadastre sua empresa em menos de um minuto, ou baixe o app pra começar a compartilhar.</p>
+      <div class="hero-ctas">
+        <a href="#empresas" class="btn btn-primary">Cadastrar minha empresa</a>
+        <a href="#pessoas" class="btn btn-ghost">Baixar o app</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-row">
+    <span class="brand-name">© 2026 FIXO PASS. Cadastre uma vez. Compartilhe em segundos.</span>
+    <div class="footer-links">
+      <a href="#seguranca">Segurança</a>
+      <a href="#">Termos de uso</a>
+      <a href="#">Privacidade</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
