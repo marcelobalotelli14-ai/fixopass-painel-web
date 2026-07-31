@@ -1,7 +1,7 @@
-const CACHE_NAME = 'fixopass-v2';
+const CACHE_NAME = 'fixopass-v3';
 const ASSETS = [
   './manifest.json',
-  './logo-fixopass.png',
+  './logo-fixopass-transparent.png',
   './hero-fixopass.png',
   './mobile-pass.png',
   './icon-192.png',

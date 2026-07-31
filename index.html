@@ -88,12 +88,11 @@
     position: sticky; top: 0; z-index: 100; background: rgba(15,20,28,0.72);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border);
   }
-  nav.wrap { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; }
+  nav.wrap { display: flex; align-items: center; justify-content: space-between; padding: 24px; }
   .logo { display: flex; align-items: center; }
   .logo-intro { display: inline-block; animation: logoIntro 0.9s cubic-bezier(.34, 1.56, .64, 1) 0.1s both; }
   .nav-logo-img {
-    display: block; height: clamp(46px, 7vw, 64px); width: auto;
-    mix-blend-mode: screen;
+    display: block; height: clamp(64px, 9.8vw, 90px); width: auto;
     transition: transform .25s ease, filter .25s ease;
   }
   .logo:hover .nav-logo-img { transform: scale(1.03); filter: drop-shadow(0 0 10px rgba(229,161,56,0.45)); }
@@ -106,7 +105,7 @@
     .logo-intro { animation: none; opacity: 1; transform: none; }
   }
   .footer-brand { display: flex; align-items: center; gap: 12px; }
-  .footer-logo-img { display: block; height: 22px; max-height: 22px; width: auto; mix-blend-mode: screen; }
+  .footer-logo-img { display: block; height: 22px; max-height: 22px; width: auto; }
   .nav-links { display: flex; align-items: center; gap: 30px; }
   .nav-links a { font-size: 14px; color: var(--text-dim); transition: color .15s ease; }
   .nav-links a:hover { color: var(--text); }
@@ -118,9 +117,10 @@
 
   /* ---------- HERO ---------- */
   .hero { padding: 120px 0 100px; overflow: hidden; }
+  .hero .wrap { max-width: 1400px; }
   .hero-glow {
-    position: absolute; width: 1100px; height: 1100px; left: 50%; top: -520px;
-    transform: translateX(-50%); background: radial-gradient(circle, rgba(229,161,56,0.28) 0%, rgba(229,161,56,0.08) 45%, transparent 72%);
+    position: absolute; width: 1300px; height: 1300px; left: 50%; top: -560px;
+    transform: translateX(-50%); background: radial-gradient(circle, rgba(229,161,56,0.36) 0%, rgba(229,161,56,0.12) 45%, transparent 72%);
     filter: blur(10px); z-index: 0; pointer-events: none;
   }
   .hero-glow-2 {
@@ -151,22 +151,32 @@
   .metric-badge .lbl { font-size: 11.5px; color: var(--text-dim); line-height: 1.3; }
 
   /* ---------- HERO IMAGE ---------- */
-  .hero-image { width: 100%; max-width: 1080px; margin: 0 auto; }
+  .hero-image { width: 100%; max-width: 1450px; margin: 0 auto; position: relative; }
+  .hero-image::before {
+    content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 92%; height: 92%; border-radius: 50%;
+    background: radial-gradient(circle, rgba(229,161,56,0.4) 0%, rgba(229,161,56,0.14) 45%, transparent 72%);
+    filter: blur(40px); z-index: 0; pointer-events: none;
+  }
   .hero-image img {
+    position: relative; z-index: 1;
     width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto;
     opacity: 1; visibility: visible; border-radius: var(--r-lg);
     border: 1px solid var(--border);
     will-change: transform, box-shadow;
     animation: float 4s ease-in-out infinite;
   }
+  @media (max-width: 640px) {
+    .hero-image { max-width: 80vw; }
+  }
   @keyframes float {
     0%, 100% {
       transform: translateY(0);
-      box-shadow: 0 50px 120px -30px rgba(0,0,0,0.75), 0 0 60px -10px rgba(229,161,56,0.12);
+      box-shadow: 0 50px 120px -30px rgba(0,0,0,0.8), 0 0 90px -8px rgba(229,161,56,0.22);
     }
     50% {
       transform: translateY(-14px);
-      box-shadow: 0 65px 130px -30px rgba(0,0,0,0.7), 0 0 95px -5px rgba(229,161,56,0.3);
+      box-shadow: 0 65px 140px -30px rgba(0,0,0,0.75), 0 0 130px -5px rgba(229,161,56,0.45);
     }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -335,10 +345,13 @@
   #preloader.is-hidden { opacity: 0; pointer-events: none; }
   .preloader-inner { display: flex; flex-direction: column; align-items: center; gap: 30px; }
   .preloader-logo {
-    height: clamp(56px, 10vw, 84px); width: auto; mix-blend-mode: screen;
+    height: clamp(56px, 10vw, 84px); width: auto;
     opacity: 0; transform: translateY(-80px);
     will-change: transform, opacity;
     animation: preloaderLogoDrop 0.9s cubic-bezier(.34, 1.56, .64, 1) forwards;
+  }
+  @media (max-width: 640px) {
+    .preloader-logo { width: clamp(200px, 60vw, 400px); height: auto; }
   }
   @keyframes preloaderLogoDrop {
     0% { opacity: 0; transform: translateY(-80px); }
@@ -364,7 +377,7 @@
 
 <div id="preloader" aria-hidden="true">
   <div class="preloader-inner">
-    <img src="logo-fixopass.png" alt="" class="preloader-logo">
+    <img src="logo-fixopass-transparent.png" alt="" class="preloader-logo">
     <div class="preloader-bar"><div class="preloader-bar-fill"></div></div>
   </div>
 </div>
@@ -373,7 +386,7 @@
   <nav class="wrap">
     <div class="logo">
       <span class="logo-intro">
-        <img src="logo-fixopass.png" alt="FIXO PASS" class="nav-logo-img">
+        <img src="logo-fixopass-transparent.png" alt="FIXO PASS" class="nav-logo-img">
       </span>
     </div>
     <div class="nav-links">
@@ -678,7 +691,7 @@
 <footer>
   <div class="wrap footer-row">
     <div class="footer-brand">
-      <img src="logo-fixopass.png" alt="FIXO PASS" class="footer-logo-img">
+      <img src="logo-fixopass-transparent.png" alt="FIXO PASS" class="footer-logo-img">
       <span>© 2026. Cadastre uma vez. Compartilhe em segundos.</span>
     </div>
     <div class="footer-links">
