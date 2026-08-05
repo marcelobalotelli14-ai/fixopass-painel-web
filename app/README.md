@@ -69,10 +69,9 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
   via `naturalWidth`/`naturalHeight`). Também testei o upload de foto pela UI de
   verdade em `user-dashboard.html` (evento `change` real no `<input type="file">`, sem
   pular pro `apiUpload` direto). A conta de usuário usada nesse teste foi excluída pelo
-  `DELETE /users/me` depois — **mas a empresa de teste (`Empresa Teste Claude`) continua
-  no banco de produção**, porque não existe `DELETE /companies/me` (nem qualquer outra
-  forma de uma empresa se auto-excluir) neste backend ainda. Diferente do usuário
-  comum, isso ficou pendente.
+  `DELETE /users/me` depois; a empresa de teste foi **encerrada** (não excluída — ver
+  seção "Encerrar conta" abaixo) pelo `DELETE /companies/me`, que passou a existir logo
+  em seguida.
 
 Todas as três telas de entrada (`index.html`, `login.html`, `register-user.html`) têm o
 mesmo seletor de perfil no topo do formulário — `[ Sou Cliente ] | [ Sou Empresa ]` —
@@ -105,6 +104,18 @@ python3 -m http.server 5500
   Puxa de `GET /companies/me/compartilhamentos` (50 mais recentes, sem paginação por
   ora). Antes desse endpoint, essa informação só existia via webhook/polling do
   próprio ERP da empresa — não tinha nenhum jeito de ver isso direto no painel web.
+- **Encerrar conta da empresa** — seção vermelha no fim da "Visão geral" (mesma tela de
+  "Dados da empresa"), com modal de confirmação explicando que o acesso ao painel, a API
+  Key e o NFC/QR Code de todas as unidades param de funcionar imediatamente. Chama
+  `DELETE /companies/me`, que é **soft delete** (`ativa = false`) — bem diferente de
+  `DELETE /users/me` (exclusão definitiva). Depois de encerrada, a empresa não consegue
+  reabrir a conta sozinha; login (`POST /companies/login`) passa a rejeitar mesmo com
+  senha certa. Redireciona pra `/app?conta-encerrada=1`, que mostra um aviso de sucesso
+  na tela de login. Testado de ponta a ponta com uma conta descartável: clique real no
+  modal → confirmei via API que login, API Key e leitura de QR Code de uma unidade dela
+  passam a falhar logo em seguida (login com `401 "Esta conta foi encerrada."`, API Key
+  com `401`, QR Code com `404` — mesma mensagem de QR inválido, pra não vazar que a
+  empresa existiu).
 
 ## Deixando o NFC funcionando de verdade (passo operacional, fora do software)
 

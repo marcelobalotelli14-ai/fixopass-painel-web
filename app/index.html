@@ -73,6 +73,10 @@
     background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
     padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none;
   }
+  .info-banner {
+    background: rgba(227, 162, 61, 0.12); border: 1px solid var(--accent); color: var(--accent);
+    padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none;
+  }
   .profile-toggle {
     display: flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px;
     padding: 4px; margin-bottom: 24px; gap: 4px;
@@ -186,6 +190,27 @@
   .qr-modal img { width: 220px; height: 220px; background: #fff; border-radius: 6px; padding: 10px; }
   .qr-modal .token { font-size: 11px; color: var(--text-dim); margin-top: 14px; word-break: break-all; }
 
+  /* ---------- Encerrar conta ---------- */
+  .panel-danger { border-color: var(--deny); }
+  .panel-danger h3 { color: #ffb3ab; }
+
+  .confirm-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .confirm-modal-backdrop.is-open { display: flex; }
+  .confirm-modal {
+    background: var(--surface); border: 1px solid var(--deny); border-radius: var(--radius);
+    padding: 26px; max-width: 400px; width: 100%;
+  }
+  .confirm-modal h3 { margin: 0 0 10px; font-size: 18px; }
+  .confirm-modal p { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; margin: 0 0 12px; }
+  .confirm-modal-error {
+    background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
+    padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none;
+  }
+  .confirm-modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+
   .empty-state {
     text-align: center; padding: 40px 20px; color: var(--text-dim); font-size: 14px;
   }
@@ -251,6 +276,7 @@
       <a href="/app" class="active">Sou Empresa</a>
     </div>
 
+    <div id="info-banner" class="info-banner"></div>
     <div id="error-banner" class="error-banner"></div>
 
     <!-- Login -->
@@ -384,6 +410,17 @@
             </div>
           </div>
         </div>
+
+        <div class="panel panel-danger" style="margin-top:20px">
+          <h3>Encerrar conta da empresa</h3>
+          <div class="panel-sub">
+            Desativa o acesso ao painel, a API Key e o NFC/QR Code de todas as unidades deste
+            estabelecimento imediatamente. Clientes que aproximarem o celular ou lerem o QR Code
+            depois disso não vão mais conseguir compartilhar dados com você. O histórico de
+            compartilhamentos já recebidos é mantido para fins de auditoria.
+          </div>
+          <button class="btn-deny" onclick="abrirModalEncerrarConta()">Encerrar conta da empresa</button>
+        </div>
       </div>
 
       <!-- Campos solicitados -->
@@ -486,6 +523,27 @@ Header: X-API-KEY: &lt;sua API Key&gt;
     <img id="qr-modal-img" src="" alt="QR Code da unidade" />
     <div class="token">Token: <span id="qr-modal-token" class="mono"></span></div>
     <button class="btn-ghost" style="width:100%; margin-top:16px" onclick="closeQrModal()">Fechar</button>
+  </div>
+</div>
+
+<!-- Modal de confirmação — encerrar conta da empresa -->
+<div class="confirm-modal-backdrop" id="encerrar-modal-backdrop" onclick="if(event.target===this) fecharModalEncerrarConta()">
+  <div class="confirm-modal">
+    <h3>Encerrar sua conta de empresa?</h3>
+    <p>
+      A partir de agora, <strong>nenhum cliente vai conseguir aproximar o NFC ou ler o QR Code</strong>
+      das unidades deste estabelecimento para compartilhar dados com você. Sua API Key e o acesso a
+      este painel também param de funcionar imediatamente.
+    </p>
+    <p>
+      Isso não apaga seu histórico de compartilhamentos recebidos — ele fica preservado para
+      auditoria. Não é possível reabrir a conta sozinho depois disso.
+    </p>
+    <div class="confirm-modal-error" id="encerrar-modal-error"></div>
+    <div class="confirm-modal-actions">
+      <button class="btn-ghost" style="flex:1" onclick="fecharModalEncerrarConta()">Cancelar</button>
+      <button class="btn-deny" style="flex:1" id="btn-confirmar-encerramento" onclick="confirmarEncerramentoConta()">Sim, encerrar conta</button>
+    </div>
   </div>
 </div>
 
@@ -664,6 +722,34 @@ function logout() {
   document.getElementById('app-screen').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
   showLogin();
+}
+
+// ---------- Encerrar conta ----------
+function abrirModalEncerrarConta() {
+  document.getElementById('encerrar-modal-error').style.display = 'none';
+  document.getElementById('encerrar-modal-backdrop').classList.add('is-open');
+}
+function fecharModalEncerrarConta() {
+  document.getElementById('encerrar-modal-backdrop').classList.remove('is-open');
+}
+
+async function confirmarEncerramentoConta() {
+  const btn = document.getElementById('btn-confirmar-encerramento');
+  const errEl = document.getElementById('encerrar-modal-error');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Encerrando...';
+  try {
+    await api('/companies/me', { method: 'DELETE' });
+    companyId = null;
+    localStorage.removeItem('fixopass_company_id');
+    location.href = '/app?conta-encerrada=1';
+  } catch (e) {
+    errEl.textContent = 'Não foi possível encerrar sua conta agora: ' + e.message + '. Tente novamente em instantes ou fale com o suporte.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Sim, encerrar conta';
+  }
 }
 
 // ---------- App shell ----------
@@ -984,6 +1070,12 @@ function closeQrModal() {
 }
 
 // ---------- Boot ----------
+if (new URLSearchParams(location.search).get('conta-encerrada') === '1') {
+  const el = document.getElementById('info-banner');
+  el.textContent = 'Sua conta de empresa foi encerrada. Sentiremos sua falta — obrigado por ter usado o FIXO PASS.';
+  el.style.display = 'block';
+}
+
 if (companyId) {
   enterApp();
 } else if (new URLSearchParams(location.search).get('cadastro') === 'empresa') {
