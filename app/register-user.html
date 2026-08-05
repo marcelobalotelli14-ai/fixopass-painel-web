@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Criar conta — FIXO PASS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #10151b; --surface: #1a2129; --surface-2: #212b35; --border: #2e3944;
+    --text: #ece8df; --text-dim: #8b96a1; --accent: #e3a23d; --accent-ink: #2a1d08;
+    --deny: #c1554b; --radius: 10px;
+    --font-display: 'Space Grotesk', sans-serif; --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+  h1, h2, .display { font-family: var(--font-display); letter-spacing: -0.01em; }
+  a { color: var(--accent); }
+  button {
+    font-family: var(--font-body); font-weight: 600; cursor: pointer;
+    border-radius: 6px; border: 1px solid transparent; padding: 10px 16px;
+    font-size: 14px; transition: transform .08s ease, filter .15s ease;
+  }
+  button:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  input {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 12px; border-radius: 6px; font-family: var(--font-body); font-size: 14px; width: 100%;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  label { font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 6px; }
+  .field { margin-bottom: 16px; }
+  .field .optional { color: var(--text-dim); font-weight: 400; }
+
+  #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 24px 48px; }
+  .auth-card {
+    width: 100%; max-width: 420px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 32px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 8px; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; color: var(--accent-ink); font-size: 15px;
+  }
+  .brand-name { font-size: 17px; font-weight: 600; }
+  .auth-card h2 { margin: 0 0 4px; font-size: 22px; }
+  .auth-card .sub { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
+  .switch-link { text-align: center; margin-top: 18px; font-size: 13px; color: var(--text-dim); }
+  .error-banner {
+    background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
+    padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none;
+  }
+  .business-note {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim);
+    padding: 10px 12px; border-radius: 6px; font-size: 12.5px; margin-bottom: 16px; line-height: 1.5;
+  }
+  .business-note a { color: var(--accent); font-weight: 600; }
+
+  #success-screen { display: none; text-align: center; }
+  #success-screen .check {
+    width: 48px; height: 48px; border-radius: 50%; background: rgba(227,162,61,0.15); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;
+  }
+  #success-screen h2 { margin-bottom: 8px; }
+  #success-screen .sub { margin-bottom: 26px; }
+  #success-screen button { width: 100%; }
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-mark">FP</div>
+      <div class="brand-name">FIXO PASS</div>
+    </div>
+
+    <div class="business-note">É uma empresa? <a href="/app?cadastro=empresa">Cadastre sua empresa aqui &rarr;</a></div>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <!-- Cadastro -->
+    <div id="register-form">
+      <h2>Criar conta</h2>
+      <div class="sub">Cadastre seus dados uma vez, compartilhe em segundos quando precisar.</div>
+      <div class="field"><label>Nome completo</label><input id="reg-nome" placeholder="Seu nome completo" /></div>
+      <div class="field"><label>Telefone</label><input id="reg-telefone" placeholder="(11) 91234-5678" /></div>
+      <div class="field"><label>E-mail</label><input type="email" id="reg-email" placeholder="voce@email.com" /></div>
+      <div class="field"><label>CPF</label><input id="reg-cpf" placeholder="000.000.000-00" /></div>
+      <div class="field"><label>Endereço <span class="optional">(opcional)</span></label><input id="reg-endereco" placeholder="Rua, número, bairro" /></div>
+      <div class="field"><label>Senha</label><input type="password" id="reg-senha" placeholder="mínimo 6 caracteres" /></div>
+      <button class="btn-primary" style="width:100%" onclick="doRegister()">Criar conta</button>
+      <div class="switch-link">Já tem conta? <a href="/app/login.html">Entrar</a></div>
+    </div>
+
+    <!-- Sucesso -->
+    <div id="success-screen">
+      <div class="check">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <h2>Conta criada!</h2>
+      <div class="sub">Agora é só entrar com seu e-mail e senha.</div>
+      <button class="btn-primary" onclick="location.href='/app/login.html'">Ir para o login</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const apiBase = 'https://fixopass-backend-production.up.railway.app';
+
+function showError(msg) {
+  const el = document.getElementById('error-banner');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError() {
+  document.getElementById('error-banner').style.display = 'none';
+}
+
+async function api(path, options = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  const res = await fetch(apiBase + path, Object.assign({}, options, { headers }));
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* pode ser vazio */ }
+  if (!res.ok) {
+    throw new Error((body && body.error) || `Erro ${res.status}`);
+  }
+  return body;
+}
+
+async function doRegister() {
+  hideError();
+  const payload = {
+    nomeCompleto: document.getElementById('reg-nome').value.trim(),
+    telefone: document.getElementById('reg-telefone').value.trim(),
+    email: document.getElementById('reg-email').value.trim(),
+    cpf: document.getElementById('reg-cpf').value.trim(),
+    endereco: document.getElementById('reg-endereco').value.trim(),
+    senha: document.getElementById('reg-senha').value,
+  };
+
+  if (!payload.nomeCompleto || !payload.telefone || !payload.email || !payload.cpf || !payload.senha) {
+    showError('Preencha todos os campos obrigatórios.');
+    return;
+  }
+  if (!/^\S+@\S+\.\S+$/.test(payload.email)) {
+    showError('Informe um e-mail válido.');
+    return;
+  }
+  if (payload.senha.length < 6) {
+    showError('A senha deve ter no mínimo 6 caracteres.');
+    return;
+  }
+  if (!payload.endereco) delete payload.endereco;
+
+  try {
+    await api('/users', { method: 'POST', body: JSON.stringify(payload) });
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('success-screen').style.display = 'block';
+  } catch (e) {
+    showError(e.message);
+  }
+}
+</script>
+</body>
+</html>

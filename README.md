@@ -19,13 +19,25 @@ Site estático puro — sem build step. `vercel.json` fixa `Cache-Control: no-ca
 versão antiga depois de um novo deploy (o `sw.js` já usa estratégia network-first para
 o HTML, cache-first só para os assets estáticos).
 
-## O que ainda precisa ser conectado (links são placeholders `#`/`/login`/`/register` por enquanto)
+## Header: dois públicos, dois fluxos
 
-- **"Cadastrar minha empresa" / "Entrar"** → apontar para a URL real do
-  `fixopass-painel-web` depois que ele estiver hospedado (hoje ele também roda local,
-  sem domínio público).
-- **"Baixar o app"** → apontar para a App Store / Google Play depois que o `fixopass-app`
-  tiver uma build publicada (hoje ele só roda via Expo Go/development build).
+O header separa claramente os dois perfis que a landing atende:
+
+- **Usuário comum (B2C)** — botões "Entrar" e "Criar conta" no topo (destaque), levando
+  para `/app/login.html` e `/app/register-user.html`. Essas páginas conversam direto com
+  o backend da Railway (`POST /users/login` e `POST /users`, o mesmo contrato já usado
+  pelo `mobile-app`), sem passar pelo painel de empresa.
+- **Empresa (B2B)** — link secundário "Sou empresa" no header (menor, à esquerda dos
+  botões de usuário) e, no mobile, dentro do menu hambúrguer. Leva para `/app`, o painel
+  da empresa (`app/index.html`), com login e cadastro (`/app?cadastro=empresa`) nele
+  mesmo. Também aparece em destaque nas seções "Para empresas" da própria página.
+
+## O que ainda precisa ser conectado
+
+- **"Baixar o app"** → os selos da App Store / Google Play seguem "Em breve" — apontar
+  para as lojas de verdade depois que o `mobile-app` tiver uma build publicada (hoje só
+  roda via Expo Go/development build). Enquanto isso, `/app/register-user.html` já deixa
+  a pessoa criar a conta pela web.
 - **"Termos de uso" / "Privacidade"** → o rodapé aponta para `termos.html` /
   `privacidade.html`, mas são rascunhos sem revisão jurídica (banner "rascunho" nas
   próprias páginas). A versão final ainda é um item pendente antes do piloto real, por

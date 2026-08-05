@@ -1,6 +1,21 @@
-# FIXO PASS — Painel Web da Empresa
+# FIXO PASS — Painel Web da Empresa + Acesso do Usuário Comum
 
 Frontend estático (HTML/CSS/JS puro, sem build step) que consome a API do `fixopass-backend`.
+
+Três páginas independentes, cada uma com seu próprio `apiBase` inline (sem módulo JS
+compartilhado, seguindo o padrão "sem build step" do projeto):
+
+- **`index.html`** — painel da empresa (B2B): login, cadastro de empresa
+  (`POST /companies`), configuração de campos, unidades/QR Code, integração ERP.
+- **`login.html`** — login do usuário comum (B2C): `POST /users/login`.
+- **`register-user.html`** — cadastro do usuário comum (B2C): `POST /users` (mesmos
+  campos que o `mobile-app` envia: `nomeCompleto`, `telefone`, `email`, `cpf`,
+  `endereco` opcional, `senha`).
+
+O usuário comum não tem um painel completo aqui (isso é o `mobile-app` — NFC/QR Code,
+histórico de compartilhamentos etc.); `login.html`/`register-user.html` existem só para
+não deixar a landing page sem um lugar funcional para criar conta enquanto o app não
+está publicado nas lojas.
 
 ## Como rodar
 

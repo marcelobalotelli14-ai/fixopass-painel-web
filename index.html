@@ -109,21 +109,50 @@
   .nav-links { display: flex; align-items: center; gap: 30px; }
   .nav-links a { font-size: 14px; color: var(--text-dim); transition: color .15s ease; }
   .nav-links a:hover { color: var(--text); }
-  .nav-cta { display: flex; align-items: center; gap: 12px; }
-  .cta-short { display: none; }
+  .nav-cta { display: flex; align-items: center; gap: 10px; }
+
+  /* "Sou empresa" — secondary doorway to the B2B flow (login/cadastro de empresa
+     at /app), kept deliberately smaller/muted so the header's main CTAs read as
+     the consumer (B2C) ones, per the "quem navega saiba onde clicar" requirement. */
+  .nav-business-link {
+    font-size: 13px; color: var(--text-dim); white-space: nowrap;
+    padding-right: 14px; margin-right: 2px; border-right: 1px solid var(--border);
+  }
+  .nav-business-link:hover { color: var(--text); }
+
+  /* Hamburger — mobile only. Houses the anchor links plus the "Sou empresa"
+     actions that don't fit in the header row once it's user-Entrar/Criar-conta first. */
+  .nav-toggle {
+    display: none; align-items: center; justify-content: center; width: 38px; height: 38px;
+    border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text);
+    cursor: pointer; flex-shrink: 0; padding: 0;
+  }
+  .nav-toggle:hover { background: var(--surface-2); }
+  .mobile-menu {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    background: rgba(15,20,28,0.97); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border); padding: 8px 24px 22px; flex-direction: column;
+  }
+  .mobile-menu.is-open { display: flex; }
+  .mobile-menu a { font-size: 15px; color: var(--text-dim); padding: 13px 2px; border-bottom: 1px solid var(--border); }
+  .mobile-menu a:hover { color: var(--text); }
+  .mobile-menu-label {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin: 16px 0 2px; padding: 0 2px;
+  }
+
   @media (max-width: 900px) {
     .nav-links { display: none; }
+    .nav-business-link { display: none; }
+    .nav-toggle { display: inline-flex; }
   }
-  /* Keep "Entrar" (acesso ao painel) visible on mobile — it was previously
-     hidden entirely on small screens, so the panel had no reachable link.
-     We shrink the logo/padding/CTA label instead so both buttons still fit. */
+  /* Keep the consumer "Entrar"/"Criar conta" actions visible on mobile — logo,
+     padding and gaps shrink on very small screens so the row still fits. */
   @media (max-width: 480px) {
     .nav-logo-img { height: 40px; }
-    nav.wrap { padding: 16px; }
-    .nav-cta { gap: 8px; }
-    .nav-cta .btn { padding: 10px 14px; font-size: 12.5px; }
-    .cta-full { display: none; }
-    .cta-short { display: inline; }
+    nav.wrap { padding: 14px 16px; }
+    .nav-cta { gap: 6px; }
+    .nav-cta .btn { padding: 9px 12px; font-size: 12.5px; }
   }
 
   /* ---------- HERO ---------- */
@@ -283,7 +312,9 @@
   /* ---------- PARA VOCÊ ---------- */
   .voce-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
   @media (max-width: 900px) { .voce-grid { grid-template-columns: 1fr; } }
-  .store-badges { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+  .voce-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
+  .voce-ctas-note { font-size: 12.5px; color: var(--text-dim); line-height: 1.6; margin: 12px 0 0; max-width: 420px; }
+  .store-badges { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
   .store-badge {
     display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 10px 16px;
     opacity: 0.7; cursor: not-allowed;
@@ -411,8 +442,21 @@
       <a href="#seguranca">Segurança</a>
     </div>
     <div class="nav-cta">
-      <a href="/app" class="btn btn-ghost btn-sm">Entrar</a>
-      <a href="/app?cadastro=empresa" class="btn btn-primary btn-sm"><span class="cta-full">Cadastrar minha empresa</span><span class="cta-short">Cadastrar</span></a>
+      <a href="/app" class="nav-business-link">Sou empresa</a>
+      <a href="/app/login.html" class="btn btn-ghost btn-sm">Entrar</a>
+      <a href="/app/register-user.html" class="btn btn-primary btn-sm">Criar conta</a>
+      <button type="button" class="nav-toggle" id="nav-toggle-btn" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobile-menu" onclick="toggleMobileMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobile-menu">
+      <a href="#como-funciona" onclick="closeMobileMenu()">Como funciona</a>
+      <a href="#empresa" onclick="closeMobileMenu()">Para empresas</a>
+      <a href="#voce" onclick="closeMobileMenu()">Para você</a>
+      <a href="#seguranca" onclick="closeMobileMenu()">Segurança</a>
+      <div class="mobile-menu-label">Sou empresa</div>
+      <a href="/app">Entrar (empresa)</a>
+      <a href="/app?cadastro=empresa">Cadastrar minha empresa</a>
     </div>
   </nav>
 </header>
@@ -632,6 +676,12 @@
             <li><span class="li-icon">&#10003;</span> Histórico completo de compartilhamentos</li>
           </ul>
 
+          <div class="voce-ctas">
+            <a href="/app/register-user.html" class="btn btn-primary">Criar minha conta</a>
+            <a href="/app/login.html" class="btn btn-ghost">Já tenho conta</a>
+          </div>
+          <p class="voce-ctas-note">O app para NFC/QR Code ainda está a caminho das lojas — mas você já pode criar sua conta e cadastrar seus dados por aqui.</p>
+
           <div class="store-badges">
             <div class="store-badge glass">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg>
@@ -717,6 +767,19 @@
     </div>
   </div>
 </footer>
+
+<script>
+  function toggleMobileMenu() {
+    var menu = document.getElementById('mobile-menu');
+    var btn = document.getElementById('nav-toggle-btn');
+    var isOpen = menu.classList.toggle('is-open');
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  }
+  function closeMobileMenu() {
+    document.getElementById('mobile-menu').classList.remove('is-open');
+    document.getElementById('nav-toggle-btn').setAttribute('aria-expanded', 'false');
+  }
+</script>
 
 <script>
   (function () {
