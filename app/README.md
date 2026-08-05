@@ -31,6 +31,21 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
     próprios dados" — endpoint real, achado e confirmado direto no Swagger do backend em
     `/docs`, não documentado no `mobile-app`). RG, data de nascimento, endereço e senha
     ainda não têm campo de edição aqui (dá pra adicionar depois, o endpoint aceita).
+    No fim da página, **"Excluir minha conta"** abre um modal de confirmação e chama
+    `DELETE /users/me` — **essa rota não existe no backend ainda** (só existe
+    `DELETE /users/me/autorizacoes/{companyId}`, que revoga uma autorização, não a conta
+    inteira). O botão já está pronto pro dia que o backend implementar; até lá, o clique
+    dá 404 e a tela mostra um aviso explicando isso (sem parecer erro genérico) em vez de
+    fingir que funcionou. **Isso precisa ser implementado no repositório do
+    `fixopass-backend`** — não dá pra fazer esse lado no `fixopass-painel-web` (é só
+    frontend estático, sem acesso ao código ou ao banco do backend). Spec sugerida:
+
+    ```
+    DELETE /users/me
+    Header: X-USER-ID: <uuid do usuário>  (mesmo padrão de auth já usado em GET/PUT /users/me)
+    200 -> apaga o usuário e, em cascata, LogAcesso/autorizações/solicitações ligadas a ele
+    404 -> X-USER-ID não corresponde a um usuário existente
+    ```
 
   Não há nenhum aviso de "aguarde o app nas lojas" bloqueando a tela — o app mobile
   continua sendo o único jeito de ler NFC de verdade, mas QR Code e edição de perfil já
@@ -90,6 +105,10 @@ identificador dos dois jeitos, então não precisa gravar nada diferente.
 - Sessão simplificada via `X-COMPANY-ID` guardado no navegador (`localStorage`) — trocar por cookie de sessão/JWT quando o backend tiver autenticação real.
 - Sem paginação nem busca nas listas — ok para o volume de um piloto, revisar antes de escalar.
 - Sem tela de logs/auditoria ainda (o backend já grava tudo em `LogAcesso`, só falta expor um endpoint de leitura e essa tela aqui).
+- Sem exclusão de conta de verdade ainda (exigência de LGPD) — o botão existe em
+  `user-dashboard.html`, mas depende de `DELETE /users/me` ser implementado no
+  `fixopass-backend` primeiro (ver spec na seção acima). A conta de teste
+  `claude.verify.*@example.com` continua no banco de produção por causa disso.
 
 ## Changelog da auditoria de código
 

@@ -79,6 +79,28 @@
     padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 20px; display: none;
   }
 
+  /* ---------- Excluir conta ---------- */
+  .panel-danger { border-color: var(--deny); }
+  .panel-danger h3 { color: #ffb3ab; }
+  .panel-danger .panel-sub { margin-bottom: 16px; }
+
+  .confirm-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .confirm-modal-backdrop.is-open { display: flex; }
+  .confirm-modal {
+    background: var(--surface); border: 1px solid var(--deny); border-radius: var(--radius);
+    padding: 26px; max-width: 380px; width: 100%;
+  }
+  .confirm-modal h3 { margin: 0 0 10px; font-size: 18px; }
+  .confirm-modal p { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; margin: 0 0 18px; }
+  .confirm-modal-error {
+    background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
+    padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none;
+  }
+  .confirm-modal-actions { display: flex; gap: 10px; }
+
   /* ---------- Escanear QR Code ---------- */
   .scan-card { text-align: center; padding: 36px 24px; }
   .scan-icon {
@@ -236,6 +258,32 @@
         <button class="btn-primary" style="width:100%" onclick="salvarConta()" id="btn-salvar-conta">Salvar alterações</button>
         <p class="panel-note">RG, data de nascimento, endereço e senha ainda não têm edição por aqui — em breve.</p>
       </div>
+
+      <div class="panel panel-danger">
+        <h3>Excluir minha conta</h3>
+        <div class="panel-sub">
+          Isso apaga permanentemente seus dados, autorizações e histórico de compartilhamento do FIXO PASS.
+          Não pode ser desfeito.
+        </div>
+        <button class="btn-deny" onclick="abrirModalExcluirConta()">Excluir minha conta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmação — exclusão de conta -->
+<div class="confirm-modal-backdrop" id="excluir-modal-backdrop" onclick="if(event.target===this) fecharModalExcluirConta()">
+  <div class="confirm-modal">
+    <h3>Excluir sua conta?</h3>
+    <p>
+      Essa ação é <strong>permanente</strong>. Todos os seus dados cadastrados, autorizações
+      ativas e histórico de compartilhamento serão apagados do FIXO PASS, e você não vai
+      conseguir desfazer isso depois.
+    </p>
+    <div class="confirm-modal-error" id="excluir-modal-error"></div>
+    <div class="confirm-modal-actions">
+      <button class="btn-ghost" style="flex:1" onclick="fecharModalExcluirConta()">Cancelar</button>
+      <button class="btn-deny" style="flex:1" id="btn-confirmar-exclusao" onclick="confirmarExclusaoConta()">Sim, excluir permanentemente</button>
     </div>
   </div>
 </div>
@@ -506,6 +554,39 @@ function logout() {
   localStorage.removeItem('fixopass_user_nome');
   localStorage.removeItem('fixopass_user_email');
   location.href = '/app/login.html';
+}
+
+// ---------- Excluir conta ----------
+function abrirModalExcluirConta() {
+  document.getElementById('excluir-modal-error').style.display = 'none';
+  document.getElementById('excluir-modal-backdrop').classList.add('is-open');
+}
+function fecharModalExcluirConta() {
+  document.getElementById('excluir-modal-backdrop').classList.remove('is-open');
+}
+
+async function confirmarExclusaoConta() {
+  const btn = document.getElementById('btn-confirmar-exclusao');
+  const errEl = document.getElementById('excluir-modal-error');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Excluindo...';
+  try {
+    await api('/users/me', { method: 'DELETE' });
+    localStorage.removeItem('fixopass_user_id');
+    localStorage.removeItem('fixopass_user_nome');
+    localStorage.removeItem('fixopass_user_email');
+    location.href = '/app/login.html?conta-excluida=1';
+  } catch (e) {
+    // "Erro 404" aqui normalmente significa que a rota DELETE /users/me
+    // ainda não existe no backend — não é o usuário fazendo nada errado.
+    errEl.textContent = e.message === 'Erro 404'
+      ? 'A exclusão de conta ainda não está disponível no backend. Fale com o suporte pra remover sua conta manualmente por enquanto.'
+      : 'Não foi possível excluir sua conta: ' + e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Sim, excluir permanentemente';
+  }
 }
 
 // ---------- Boot ----------
