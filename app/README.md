@@ -25,7 +25,11 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
     ausente, cai automaticamente pra um campo de texto (cola o token manualmente, o
     mesmo que aparece em "Copiar token" no painel da empresa) — nunca fica travado.
   - **Empresas autorizadas** (`GET /users/me/autorizacoes`) — histórico de quem recebeu
-    dados e quais campos.
+    dados e quais campos. Cada card tem **"Revogar acesso"**, com modal de confirmação
+    (nome da empresa incluso no texto) e `DELETE /users/me/autorizacoes/:companyId` —
+    rota que já existia desde a auditoria inicial (soft revoke: `ativo:false` +
+    `dataRevogacao`, sem apagar o registro/histórico). O card some da tela na hora, sem
+    esperar recarregar a lista inteira.
   - **Meus dados** — nome completo, e-mail, CPF, telefone, RG, data de nascimento
     (`<input type="date">`) e endereço completo (CEP, logradouro, número, complemento,
     bairro, cidade, UF), tudo carregado de `GET /users/me` e editável, salvando via

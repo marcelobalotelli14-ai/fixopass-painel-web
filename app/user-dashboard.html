@@ -182,6 +182,13 @@
     background: rgba(227,162,61,0.12); border: 1px solid var(--accent); border-radius: 20px;
     padding: 4px 10px; font-size: 11px; color: var(--accent); font-weight: 600;
   }
+  .btn-revogar {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
+    background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: 6px; padding: 7px 12px; font-size: 12px; font-family: var(--font-body);
+    font-weight: 600; cursor: pointer; transition: border-color .15s ease, color .15s ease;
+  }
+  .btn-revogar:hover { border-color: var(--deny); color: #ffb3ab; }
   .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); font-size: 14px; }
 
   .campo-row {
@@ -376,6 +383,22 @@
   </div>
 </div>
 
+<!-- Modal de confirmação — revogar acesso de uma empresa -->
+<div class="confirm-modal-backdrop" id="revogar-modal-backdrop" onclick="if(event.target===this) fecharModalRevogar()">
+  <div class="confirm-modal">
+    <h3>Revogar acesso desta empresa?</h3>
+    <p>
+      <strong id="revogar-modal-empresa">Esta empresa</strong> deixa de ter acesso aos seus dados
+      liberados. Se você aproximar o NFC ou ler o QR Code dela de novo, uma nova aprovação será pedida.
+    </p>
+    <div class="confirm-modal-error" id="revogar-modal-error"></div>
+    <div class="confirm-modal-actions">
+      <button class="btn-ghost" style="flex:1" onclick="fecharModalRevogar()">Cancelar</button>
+      <button class="btn-deny" style="flex:1" id="btn-confirmar-revogar" onclick="confirmarRevogarAcesso()">Sim, revogar acesso</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- Leitor de QR Code (jsQR, MIT) — decodifica frames da câmera direto no navegador,
@@ -460,28 +483,45 @@ function switchView(view) {
   document.getElementById('view-' + view).classList.add('active');
 }
 
+let autorizacoesCache = []; // guarda os dados completos pro modal de revogar (evita onclick com strings interpoladas)
+
 async function loadAutorizacoes() {
   const list = document.getElementById('autorizacoes-list');
   list.innerHTML = '<div class="empty-state">Carregando...</div>';
   try {
     const data = await api('/users/me/autorizacoes');
+    autorizacoesCache = data || [];
     if (!data || data.length === 0) {
       list.innerHTML = '<div class="empty-state">Você ainda não autorizou nenhuma empresa.</div>';
       return;
     }
     list.innerHTML = data.map(a => `
-      <div class="auth-card-item">
+      <div class="auth-card-item" data-company-id="${escapeHtml(a.companyId)}">
         <div class="auth-empresa">${escapeHtml(a.empresa)}</div>
         <div class="auth-data">Autorizado em ${new Date(a.dataAutorizacao).toLocaleDateString('pt-BR')}</div>
         <div class="tags-row">
           ${(a.dadosLiberados || []).map(c => `<span class="tag">${escapeHtml(LABEL_CAMPO[c] || c)}</span>`).join('')}
         </div>
+        <button type="button" class="btn-revogar" data-action="revogar" data-company-id="${escapeHtml(a.companyId)}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+          Revogar acesso
+        </button>
       </div>
     `).join('');
   } catch (e) {
     list.innerHTML = `<div class="empty-state">Erro ao carregar: ${escapeHtml(e.message)}</div>`;
   }
 }
+
+// Listener delegado — mesmo padrão usado no painel da empresa pra unidades:
+// nenhum dado de usuário (nome da empresa) vira código JS via onclick inline.
+document.getElementById('autorizacoes-list').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action="revogar"]');
+  if (!btn) return;
+  const autorizacao = autorizacoesCache.find((a) => a.companyId === btn.dataset.companyId);
+  if (!autorizacao) return;
+  abrirModalRevogar(autorizacao);
+});
 
 // ---------- Meus dados ----------
 function showContaError(msg) {
@@ -912,6 +952,47 @@ async function confirmarExclusaoConta() {
     errEl.style.display = 'block';
     btn.disabled = false;
     btn.textContent = 'Sim, excluir permanentemente';
+  }
+}
+
+// ---------- Revogar acesso de uma empresa ----------
+let autorizacaoParaRevogar = null;
+
+function abrirModalRevogar(autorizacao) {
+  autorizacaoParaRevogar = autorizacao;
+  document.getElementById('revogar-modal-empresa').textContent = autorizacao.empresa;
+  document.getElementById('revogar-modal-error').style.display = 'none';
+  document.getElementById('revogar-modal-backdrop').classList.add('is-open');
+}
+function fecharModalRevogar() {
+  document.getElementById('revogar-modal-backdrop').classList.remove('is-open');
+  autorizacaoParaRevogar = null;
+}
+
+async function confirmarRevogarAcesso() {
+  if (!autorizacaoParaRevogar) return;
+  const btn = document.getElementById('btn-confirmar-revogar');
+  const errEl = document.getElementById('revogar-modal-error');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Revogando...';
+  try {
+    await api(`/users/me/autorizacoes/${autorizacaoParaRevogar.companyId}`, { method: 'DELETE' });
+    // Remove o card na hora, sem esperar um reload da lista inteira.
+    const card = document.querySelector(`.auth-card-item[data-company-id="${CSS.escape(autorizacaoParaRevogar.companyId)}"]`);
+    if (card) card.remove();
+    autorizacoesCache = autorizacoesCache.filter((a) => a.companyId !== autorizacaoParaRevogar.companyId);
+    if (autorizacoesCache.length === 0) {
+      document.getElementById('autorizacoes-list').innerHTML = '<div class="empty-state">Você ainda não autorizou nenhuma empresa.</div>';
+    }
+    showToast('Acesso revogado.');
+    fecharModalRevogar();
+  } catch (e) {
+    errEl.textContent = 'Não foi possível revogar agora: ' + e.message + '. Tente novamente em instantes.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sim, revogar acesso';
   }
 }
 
