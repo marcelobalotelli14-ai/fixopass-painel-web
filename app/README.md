@@ -26,14 +26,25 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
     mesmo que aparece em "Copiar token" no painel da empresa) — nunca fica travado.
   - **Empresas autorizadas** (`GET /users/me/autorizacoes`) — histórico de quem recebeu
     dados e quais campos.
-  - **Meus dados** — nome/e-mail só leitura (o backend ainda não expõe edição de perfil
-    pra usuário comum, então não fingimos que existe).
+  - **Meus dados** — nome completo, e-mail, CPF e telefone, carregados de
+    `GET /users/me` e editáveis, salvando via `PUT /users/me` ("Usuário edita seus
+    próprios dados" — endpoint real, achado e confirmado direto no Swagger do backend em
+    `/docs`, não documentado no `mobile-app`). RG, data de nascimento, endereço e senha
+    ainda não têm campo de edição aqui (dá pra adicionar depois, o endpoint aceita).
 
-  Não existe ainda `GET /users/me` (perfil) nem um `POST` de update — por isso "Meus
-  dados" é só leitura, com nome/e-mail vindos do que foi salvo no login/cadastro, não de
-  uma consulta fresca ao backend. Não há nenhum aviso de "aguarde o app nas lojas"
-  bloqueando a tela — o app mobile continua sendo o único jeito de ler NFC de verdade,
-  mas QR Code já funciona 100% pela web.
+  Não há nenhum aviso de "aguarde o app nas lojas" bloqueando a tela — o app mobile
+  continua sendo o único jeito de ler NFC de verdade, mas QR Code e edição de perfil já
+  funcionam 100% pela web.
+
+  **Nota de teste**: o fluxo completo (`POST /users` → `POST /users/login` →
+  `GET /users/me` → `PUT /users/me` → `GET /users/me` de novo) foi testado direto contra
+  a API de produção da Railway com uma conta descartável (`TESTE VERIFICACAO CLAUDE...`,
+  e-mail `claude.verify.*@example.com`) pra confirmar os nomes de campo e que a alteração
+  persiste de verdade. Não existe endpoint de exclusão de usuário na API hoje, então essa
+  conta de teste continua no banco — considerar removê-la manualmente. Também reparei que
+  um `GET /users/me` feito *imediatamente* após o `PUT` pode devolver o valor antigo por
+  alguns segundos (cache/replicação com lag no backend); a tela não sofre com isso porque
+  usa a resposta do próprio `PUT` pra atualizar a UI, sem depender de um `GET` seguinte.
 
 Todas as três telas de entrada (`index.html`, `login.html`, `register-user.html`) têm o
 mesmo seletor de perfil no topo do formulário — `[ Sou Cliente ] | [ Sou Empresa ]` —

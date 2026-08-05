@@ -74,6 +74,10 @@
   .panel h3 { margin: 0 0 4px; font-size: 16px; }
   .panel .panel-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
   .panel-note { color: var(--text-dim); font-size: 12.5px; margin: 12px 0 0; line-height: 1.6; }
+  .conta-error {
+    background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
+    padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 20px; display: none;
+  }
 
   /* ---------- Escanear QR Code ---------- */
   .scan-card { text-align: center; padding: 36px 24px; }
@@ -222,11 +226,15 @@
     <!-- Meus dados -->
     <div class="view" id="view-conta">
       <h1 class="page-title">Meus dados</h1>
-      <div class="page-sub">O que está salvo na sua conta.</div>
+      <div class="page-sub">Mantenha seus dados atualizados — são eles que a empresa recebe quando você autoriza um compartilhamento.</div>
+      <div class="conta-error" id="conta-error"></div>
       <div class="panel">
-        <div class="field"><label>Nome</label><input id="conta-nome" disabled /></div>
-        <div class="field"><label>E-mail</label><input id="conta-email" disabled /></div>
-        <p class="panel-note">Edição de nome/e-mail/senha ainda não está disponível por aqui — em breve.</p>
+        <div class="field"><label>Nome completo</label><input id="conta-nome" placeholder="Carregando..." /></div>
+        <div class="field"><label>E-mail</label><input type="email" id="conta-email" placeholder="Carregando..." /></div>
+        <div class="field"><label>CPF</label><input id="conta-cpf" placeholder="Carregando..." /></div>
+        <div class="field"><label>Telefone / WhatsApp</label><input id="conta-telefone" placeholder="Carregando..." /></div>
+        <button class="btn-primary" style="width:100%" onclick="salvarConta()" id="btn-salvar-conta">Salvar alterações</button>
+        <p class="panel-note">RG, data de nascimento, endereço e senha ainda não têm edição por aqui — em breve.</p>
       </div>
     </div>
   </div>
@@ -301,6 +309,69 @@ async function loadAutorizacoes() {
     `).join('');
   } catch (e) {
     list.innerHTML = `<div class="empty-state">Erro ao carregar: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// ---------- Meus dados ----------
+function showContaError(msg) {
+  const el = document.getElementById('conta-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideContaError() {
+  document.getElementById('conta-error').style.display = 'none';
+}
+
+async function loadConta() {
+  hideContaError();
+  try {
+    const data = await api('/users/me');
+    document.getElementById('conta-nome').value = data.nomeCompleto || '';
+    document.getElementById('conta-email').value = data.email || '';
+    document.getElementById('conta-cpf').value = data.cpf || '';
+    document.getElementById('conta-telefone').value = data.telefone || '';
+
+    // Mantém o cabeçalho/localStorage em dia com o que veio da API de verdade.
+    document.getElementById('sidebar-user-name').textContent = data.nomeCompleto || 'usuário';
+    localStorage.setItem('fixopass_user_nome', data.nomeCompleto || '');
+    localStorage.setItem('fixopass_user_email', data.email || '');
+  } catch (e) {
+    showContaError('Não foi possível carregar seus dados: ' + e.message);
+  }
+}
+
+async function salvarConta() {
+  hideContaError();
+  const payload = {
+    nomeCompleto: document.getElementById('conta-nome').value.trim(),
+    email: document.getElementById('conta-email').value.trim(),
+    cpf: document.getElementById('conta-cpf').value.trim(),
+    telefone: document.getElementById('conta-telefone').value.trim(),
+  };
+
+  if (!payload.nomeCompleto || !payload.email || !payload.cpf || !payload.telefone) {
+    showContaError('Preencha todos os campos obrigatórios.');
+    return;
+  }
+  if (!/^\S+@\S+\.\S+$/.test(payload.email)) {
+    showContaError('Informe um e-mail válido.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-salvar-conta');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+  try {
+    const data = await api('/users/me', { method: 'PUT', body: JSON.stringify(payload) });
+    document.getElementById('sidebar-user-name').textContent = data.nomeCompleto || payload.nomeCompleto;
+    localStorage.setItem('fixopass_user_nome', data.nomeCompleto || payload.nomeCompleto);
+    localStorage.setItem('fixopass_user_email', data.email || payload.email);
+    showToast('Dados atualizados com sucesso.');
+  } catch (e) {
+    showContaError('Erro ao salvar: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Salvar alterações';
   }
 }
 
@@ -441,11 +512,12 @@ function logout() {
 if (!userId) {
   location.href = '/app/login.html';
 } else {
-  const nome = localStorage.getItem('fixopass_user_nome') || 'usuário';
-  document.getElementById('sidebar-user-name').textContent = nome;
-  document.getElementById('conta-nome').value = nome;
-  document.getElementById('conta-email').value = localStorage.getItem('fixopass_user_email') || '—';
+  // Pinta o nome cacheado na hora (sem esperar a rede); loadConta() busca
+  // os dados de verdade na API da Railway (GET /users/me) logo em seguida
+  // e sobrescreve tudo, incluindo o cache.
+  document.getElementById('sidebar-user-name').textContent = localStorage.getItem('fixopass_user_nome') || 'usuário';
   loadAutorizacoes();
+  loadConta();
 }
 </script>
 </body>
