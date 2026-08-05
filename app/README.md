@@ -2,20 +2,34 @@
 
 Frontend estático (HTML/CSS/JS puro, sem build step) que consome a API do `fixopass-backend`.
 
-Três páginas independentes, cada uma com seu próprio `apiBase` inline (sem módulo JS
+Quatro páginas independentes, cada uma com seu próprio `apiBase` inline (sem módulo JS
 compartilhado, seguindo o padrão "sem build step" do projeto):
 
 - **`index.html`** — painel da empresa (B2B): login, cadastro de empresa
   (`POST /companies`), configuração de campos, unidades/QR Code, integração ERP.
-- **`login.html`** — login do usuário comum (B2C): `POST /users/login`.
+- **`login.html`** — login do usuário comum (B2C): `POST /users/login`. Já logado,
+  redireciona direto pra `user-dashboard.html` (sem tela de espera no meio do caminho).
 - **`register-user.html`** — cadastro do usuário comum (B2C): `POST /users` (mesmos
   campos que o `mobile-app` envia: `nomeCompleto`, `telefone`, `email`, `cpf`,
-  `endereco` opcional, `senha`).
+  `endereco` opcional, `senha`). Depois de criar a conta, a pessoa faz login normalmente
+  (o endpoint de cadastro não devolve sessão, então não dá pra pular esse passo).
+- **`user-dashboard.html`** — painel do usuário comum: mesmo padrão visual/estrutural do
+  painel da empresa (sidebar + views), só que rodando em cima dos endpoints que o
+  `mobile-app` já usa:
+  - **Empresas autorizadas** (`GET /users/me/autorizacoes`) — histórico de quem recebeu
+    dados e quais campos.
+  - **Autorizar por código** (`POST /auth/request` + `POST /customer/share`) — equivalente
+    web de "aproximar o NFC"/"ler QR Code": a pessoa cola o token da unidade (o mesmo
+    texto por trás do QR Code, disponível em "Copiar token" no painel da empresa), vê
+    exatamente quais campos serão liberados, e aceita ou recusa.
+  - **Meus dados** — nome/e-mail só leitura (o backend ainda não expõe edição de perfil
+    pra usuário comum, então não fingimos que existe).
 
-O usuário comum não tem um painel completo aqui (isso é o `mobile-app` — NFC/QR Code,
-histórico de compartilhamentos etc.); `login.html`/`register-user.html` existem só para
-não deixar a landing page sem um lugar funcional para criar conta enquanto o app não
-está publicado nas lojas.
+  Não existe ainda `GET /users/me` (perfil) nem um `POST` de update — por isso "Meus
+  dados" é só leitura, com nome/e-mail vindos do que foi salvo no login/cadastro, não de
+  uma consulta fresca ao backend. Um aviso discreto e dispensável (não bloqueia nada)
+  lembra que o app mobile (câmera pra QR Code, leitura de NFC de verdade) ainda está a
+  caminho das lojas.
 
 ## Como rodar
 

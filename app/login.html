@@ -62,13 +62,6 @@
     padding: 10px 12px; border-radius: 6px; font-size: 12.5px; margin-bottom: 16px; line-height: 1.5;
   }
   .business-note a { color: var(--accent); font-weight: 600; }
-
-  /* Estado logado (não temos um painel completo pro usuário comum aqui —
-     isso vive no app mobile — então só confirmamos a sessão). */
-  #logged-in { display: none; text-align: center; }
-  #logged-in .welcome { font-size: 19px; margin: 4px 0 10px; }
-  #logged-in .sub { margin-bottom: 26px; }
-  #logged-in button { width: 100%; }
 </style>
 </head>
 <body>
@@ -98,16 +91,6 @@
       </div>
       <button class="btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
       <div class="switch-link">Ainda não tem conta? <a href="/app/register-user.html">Criar conta</a></div>
-    </div>
-
-    <!-- Logado -->
-    <div id="logged-in">
-      <div class="welcome">Olá, <span id="logged-in-nome">—</span> 👋</div>
-      <div class="sub">
-        Sua conta está ativa. O app FIXO PASS (NFC/QR Code) ainda está a caminho das lojas —
-        assim que publicado, use o mesmo e-mail e senha para entrar por lá.
-      </div>
-      <button class="btn-ghost" onclick="logout()">Sair</button>
     </div>
   </div>
 </div>
@@ -151,31 +134,17 @@ async function doLogin() {
     const data = await api('/users/login', { method: 'POST', body: JSON.stringify({ email, senha }) });
     localStorage.setItem('fixopass_user_id', data.userId);
     localStorage.setItem('fixopass_user_nome', data.nomeCompleto || '');
-    enterLoggedIn(data.nomeCompleto);
+    localStorage.setItem('fixopass_user_email', email);
+    location.href = '/app/user-dashboard.html';
   } catch (e) {
     showError(e.message);
   }
 }
 
-function enterLoggedIn(nome) {
-  document.getElementById('login-form').style.display = 'none';
-  document.getElementById('logged-in').style.display = 'block';
-  document.getElementById('logged-in-nome').textContent = nome || 'usuário';
-}
-
-function logout() {
-  localStorage.removeItem('fixopass_user_id');
-  localStorage.removeItem('fixopass_user_nome');
-  document.getElementById('logged-in').style.display = 'none';
-  document.getElementById('login-form').style.display = 'block';
-  document.getElementById('login-email').value = '';
-  document.getElementById('login-senha').value = '';
-}
-
 // ---------- Boot ----------
-const savedUserId = localStorage.getItem('fixopass_user_id');
-if (savedUserId) {
-  enterLoggedIn(localStorage.getItem('fixopass_user_nome'));
+// Já logado? Direto pro painel — sem tela de espera no meio do caminho.
+if (localStorage.getItem('fixopass_user_id')) {
+  location.href = '/app/user-dashboard.html';
 }
 </script>
 </body>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Minha conta — FIXO PASS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #10151b; --surface: #1a2129; --surface-2: #212b35; --border: #2e3944;
+    --text: #ece8df; --text-dim: #8b96a1; --accent: #e3a23d; --accent-ink: #2a1d08;
+    --deny: #c1554b; --radius: 10px;
+    --font-display: 'Space Grotesk', sans-serif; --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+  h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: -0.01em; }
+  code, .mono { font-family: var(--font-mono); }
+  a { color: var(--accent); }
+  button {
+    font-family: var(--font-body); font-weight: 600; cursor: pointer;
+    border-radius: 6px; border: 1px solid transparent; padding: 10px 16px;
+    font-size: 14px; transition: transform .08s ease, filter .15s ease;
+  }
+  button:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn-deny { background: transparent; color: var(--deny); border-color: var(--deny); }
+  input {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 12px; border-radius: 6px; font-family: var(--font-body); font-size: 14px; width: 100%;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  input:disabled { opacity: 0.65; cursor: not-allowed; }
+  label { font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 6px; }
+  .field { margin-bottom: 16px; }
+
+  /* ---------- App shell (mesmo padrão visual do painel da empresa) ---------- */
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 220px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border);
+    padding: 20px 14px; display: flex; flex-direction: column;
+  }
+  .sidebar .brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; margin-bottom: 30px; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 8px; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; color: var(--accent-ink); font-size: 15px;
+  }
+  .brand-name { font-size: 17px; font-weight: 600; }
+  .nav-item {
+    display: block; padding: 10px 12px; border-radius: 6px; color: var(--text-dim);
+    font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 2px; text-decoration: none;
+    border: none; background: none; text-align: left; width: 100%; font-family: var(--font-body);
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--surface-2); color: var(--accent); }
+  .sidebar-footer { margin-top: auto; padding: 0 6px; }
+  .sidebar-footer .user-name { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .main { flex: 1; padding: 36px 44px; max-width: 760px; }
+  .page-title { font-size: 26px; margin: 0 0 6px; }
+  .page-sub { color: var(--text-dim); font-size: 14px; margin-bottom: 32px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; margin-bottom: 20px;
+  }
+  .panel h3 { margin: 0 0 4px; font-size: 16px; }
+  .panel .panel-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
+  .panel-note { color: var(--text-dim); font-size: 12.5px; margin: 12px 0 0; line-height: 1.6; }
+
+  /* Aviso do app mobile — discreto, dentro do painel, nunca bloqueia nada */
+  .app-note {
+    display: flex; align-items: flex-start; gap: 10px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px; margin-bottom: 28px; font-size: 12.5px; color: var(--text-dim);
+    line-height: 1.55;
+  }
+  .app-note .icon { flex-shrink: 0; }
+  .app-note button {
+    background: none; border: none; color: var(--text-dim); font-size: 16px; cursor: pointer;
+    padding: 0 0 0 8px; margin-left: auto; line-height: 1;
+  }
+  .app-note button:hover { color: var(--text); }
+
+  .auth-card-item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin-bottom: 12px;
+  }
+  .auth-empresa { font-size: 15px; font-weight: 600; }
+  .auth-data { font-size: 12px; color: var(--text-dim); margin: 2px 0 10px; }
+  .tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    background: rgba(227,162,61,0.12); border: 1px solid var(--accent); border-radius: 20px;
+    padding: 4px 10px; font-size: 11px; color: var(--accent); font-weight: 600;
+  }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); font-size: 14px; }
+
+  .campo-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .campo-row:last-child { border-bottom: none; }
+  .campo-check { color: var(--accent); font-weight: 700; }
+  .solicitacao-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .solicitacao-actions button { flex: 1; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface-2); border: 1px solid var(--border); padding: 12px 20px;
+    border-radius: 8px; font-size: 13px; display: none; z-index: 60;
+  }
+
+  @media (max-width: 720px) {
+    .shell { flex-direction: column; }
+    .sidebar {
+      width: 100%; flex-direction: row; overflow-x: auto; -webkit-overflow-scrolling: touch;
+      padding: 10px 10px; position: sticky; top: 0; z-index: 40; align-items: center;
+    }
+    .sidebar .brand { display: none; }
+    .nav-item { flex-shrink: 0; white-space: nowrap; margin-bottom: 0; width: auto; }
+    .sidebar-footer { margin: 0 0 0 auto; padding: 0; display: flex; align-items: center; flex-shrink: 0; }
+    .sidebar-footer .user-name { display: none; }
+    .sidebar-footer button { white-space: nowrap; padding: 8px 12px; }
+    .main { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="sidebar">
+    <div class="brand"><div class="brand-mark">FP</div><div class="brand-name">FIXO PASS</div></div>
+    <button type="button" class="nav-item active" data-view="autorizacoes" onclick="switchView('autorizacoes')">Empresas autorizadas</button>
+    <button type="button" class="nav-item" data-view="autorizar" onclick="switchView('autorizar')">Autorizar por código</button>
+    <button type="button" class="nav-item" data-view="conta" onclick="switchView('conta')">Meus dados</button>
+    <div class="sidebar-footer">
+      <div class="user-name" id="sidebar-user-name">—</div>
+      <button class="btn-ghost" style="width:100%" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="app-note" id="app-note">
+      <span class="icon">📱</span>
+      <span>O app mobile (leitura de NFC e câmera para QR Code) ainda está a caminho das lojas. Enquanto isso, use "Autorizar por código" aqui no painel — é o mesmo token que a empresa mostra no QR Code dela.</span>
+      <button type="button" onclick="document.getElementById('app-note').style.display='none'" aria-label="Dispensar aviso">&times;</button>
+    </div>
+
+    <!-- Empresas autorizadas -->
+    <div class="view active" id="view-autorizacoes">
+      <h1 class="page-title">Empresas autorizadas</h1>
+      <div class="page-sub">Empresas que já receberam algum dos seus dados, e o que foi liberado pra cada uma.</div>
+      <div id="autorizacoes-list"><div class="empty-state">Carregando...</div></div>
+    </div>
+
+    <!-- Autorizar por código -->
+    <div class="view" id="view-autorizar">
+      <h1 class="page-title">Autorizar por código</h1>
+      <div class="page-sub">Peça à empresa o código (token) da unidade — é o mesmo texto por trás do QR Code — e cole abaixo.</div>
+
+      <div class="panel" id="token-panel">
+        <h3>Código da unidade</h3>
+        <div class="panel-sub">Consulte o pedido antes de aprovar — você vê exatamente quais dados serão enviados.</div>
+        <div class="field"><label>Token</label><input id="token-input" placeholder="Cole aqui o código da unidade" /></div>
+        <button class="btn-primary" onclick="solicitarAutorizacao()">Consultar solicitação</button>
+      </div>
+
+      <div class="panel" id="solicitacao-panel" style="display:none">
+        <h3 id="solicitacao-empresa">—</h3>
+        <div class="panel-sub" id="solicitacao-mensagem"></div>
+        <div id="solicitacao-campos"></div>
+        <div class="solicitacao-actions">
+          <button class="btn-primary" onclick="responderSolicitacao(true)">Aceitar e compartilhar</button>
+          <button class="btn-deny" onclick="responderSolicitacao(false)">Recusar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meus dados -->
+    <div class="view" id="view-conta">
+      <h1 class="page-title">Meus dados</h1>
+      <div class="page-sub">O que está salvo na sua conta.</div>
+      <div class="panel">
+        <div class="field"><label>Nome</label><input id="conta-nome" disabled /></div>
+        <div class="field"><label>E-mail</label><input id="conta-email" disabled /></div>
+        <p class="panel-note">Edição de nome/e-mail/senha ainda não está disponível por aqui — em breve.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LABEL_CAMPO = {
+  NOME: 'Nome', TELEFONE: 'Telefone', EMAIL: 'E-mail', CPF: 'CPF', RG: 'RG',
+  DATA_NASCIMENTO: 'Data de nascimento', ENDERECO: 'Endereço', FOTO: 'Foto',
+};
+
+const apiBase = 'https://fixopass-backend-production.up.railway.app';
+const userId = localStorage.getItem('fixopass_user_id');
+
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2600);
+}
+
+async function api(path, options = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (userId) headers['X-USER-ID'] = userId;
+  const res = await fetch(apiBase + path, Object.assign({}, options, { headers }));
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* pode ser vazio */ }
+  if (!res.ok) {
+    throw new Error((body && body.error) || `Erro ${res.status}`);
+  }
+  return body;
+}
+
+function switchView(view) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+}
+
+async function loadAutorizacoes() {
+  const list = document.getElementById('autorizacoes-list');
+  list.innerHTML = '<div class="empty-state">Carregando...</div>';
+  try {
+    const data = await api('/users/me/autorizacoes');
+    if (!data || data.length === 0) {
+      list.innerHTML = '<div class="empty-state">Você ainda não autorizou nenhuma empresa.</div>';
+      return;
+    }
+    list.innerHTML = data.map(a => `
+      <div class="auth-card-item">
+        <div class="auth-empresa">${escapeHtml(a.empresa)}</div>
+        <div class="auth-data">Autorizado em ${new Date(a.dataAutorizacao).toLocaleDateString('pt-BR')}</div>
+        <div class="tags-row">
+          ${(a.dadosLiberados || []).map(c => `<span class="tag">${escapeHtml(LABEL_CAMPO[c] || c)}</span>`).join('')}
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state">Erro ao carregar: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+let solicitacaoAtual = null;
+
+async function solicitarAutorizacao() {
+  const token = document.getElementById('token-input').value.trim();
+  if (!token) { showToast('Cole o código da unidade.'); return; }
+  try {
+    const data = await api('/auth/request', { method: 'POST', body: JSON.stringify({ metodo: 'QRCODE', qrCodeToken: token }) });
+    solicitacaoAtual = data;
+    document.getElementById('solicitacao-empresa').textContent = data.empresa || 'Empresa';
+    document.getElementById('solicitacao-mensagem').textContent = data.mensagem || '';
+    document.getElementById('solicitacao-campos').innerHTML = (data.camposPedidos || []).map(c => `
+      <div class="campo-row"><span>${escapeHtml(LABEL_CAMPO[c] || c)}</span><span class="campo-check">&#10003;</span></div>
+    `).join('');
+    document.getElementById('solicitacao-panel').style.display = 'block';
+  } catch (e) {
+    showToast('Código inválido ou erro: ' + e.message);
+  }
+}
+
+async function responderSolicitacao(aprovar) {
+  if (!solicitacaoAtual) return;
+  try {
+    await api('/customer/share', {
+      method: 'POST',
+      body: JSON.stringify({ solicitacaoId: solicitacaoAtual.solicitacaoId, aprovar }),
+    });
+    showToast(aprovar ? 'Dados compartilhados.' : 'Solicitação recusada.');
+    document.getElementById('solicitacao-panel').style.display = 'none';
+    document.getElementById('token-input').value = '';
+    solicitacaoAtual = null;
+    if (aprovar) {
+      switchView('autorizacoes');
+      loadAutorizacoes();
+    }
+  } catch (e) {
+    showToast('Erro: ' + e.message);
+  }
+}
+
+function logout() {
+  localStorage.removeItem('fixopass_user_id');
+  localStorage.removeItem('fixopass_user_nome');
+  localStorage.removeItem('fixopass_user_email');
+  location.href = '/app/login.html';
+}
+
+// ---------- Boot ----------
+if (!userId) {
+  location.href = '/app/login.html';
+} else {
+  const nome = localStorage.getItem('fixopass_user_nome') || 'usuário';
+  document.getElementById('sidebar-user-name').textContent = nome;
+  document.getElementById('conta-nome').value = nome;
+  document.getElementById('conta-email').value = localStorage.getItem('fixopass_user_email') || '—';
+  loadAutorizacoes();
+}
+</script>
+</body>
+</html>
