@@ -568,6 +568,20 @@ async function doRegister() {
     emailContato: document.getElementById('reg-email').value.trim(),
     senha: document.getElementById('reg-senha').value,
   };
+
+  if (!payload.nome || !payload.cnpj || !payload.categoria || !payload.emailContato || !payload.senha) {
+    showError('Preencha todos os campos obrigatórios.');
+    return;
+  }
+  if (!/^\S+@\S+\.\S+$/.test(payload.emailContato)) {
+    showError('Informe um e-mail válido.');
+    return;
+  }
+  if (payload.senha.length < 6) {
+    showError('A senha deve ter no mínimo 6 caracteres.');
+    return;
+  }
+
   try {
     const data = await api('/companies', { method: 'POST', body: JSON.stringify(payload) });
     lastApiKey = data.apiKey;

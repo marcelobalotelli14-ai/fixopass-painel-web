@@ -26,8 +26,10 @@ o HTML, cache-first só para os assets estáticos).
   sem domínio público).
 - **"Baixar o app"** → apontar para a App Store / Google Play depois que o `fixopass-app`
   tiver uma build publicada (hoje ele só roda via Expo Go/development build).
-- **"Termos de uso" / "Privacidade"** → ainda não existem (ver `CHECKLIST-PILOTO.md` do
-  backend — é um item pendente antes do piloto real, por causa de CPF/RG/dados de saúde).
+- **"Termos de uso" / "Privacidade"** → o rodapé aponta para `termos.html` /
+  `privacidade.html`, mas são rascunhos sem revisão jurídica (banner "rascunho" nas
+  próprias páginas). A versão final ainda é um item pendente antes do piloto real, por
+  causa de CPF/RG/dados de saúde (ver `CHECKLIST-PILOTO.md` do backend).
 
 ## Identidade visual
 
