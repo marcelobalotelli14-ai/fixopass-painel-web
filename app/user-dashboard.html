@@ -409,10 +409,22 @@ function showToast(msg) {
 async function api(path, options = {}) {
   const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
   if (userId) headers['X-USER-ID'] = userId;
-  const res = await fetch(apiBase + path, Object.assign({}, options, { headers }));
+  console.log('[FIXO PASS] ->', options.method || 'GET', path, options.body ? JSON.parse(options.body) : undefined);
+  let res;
+  try {
+    res = await fetch(apiBase + path, Object.assign({}, options, { headers }));
+  } catch (networkErr) {
+    // fetch rejeita (sem status nenhum) em falha de rede de verdade — DNS,
+    // CORS bloqueado antes da resposta, sem internet. Isso é bem diferente
+    // de um 4xx/5xx (que cai no bloco abaixo, com corpo e status).
+    console.error('[FIXO PASS] Falha de rede em', path, networkErr);
+    throw new Error('Falha de conexão com o servidor. Verifique sua internet e tente de novo.');
+  }
   let body = null;
   try { body = await res.json(); } catch (e) { /* pode ser vazio */ }
+  console.log('[FIXO PASS] <-', res.status, path, body);
   if (!res.ok) {
+    console.error('[FIXO PASS] Erro na resposta de', path, { status: res.status, body });
     throw new Error((body && body.error) || `Erro ${res.status}`);
   }
   return body;
@@ -423,10 +435,19 @@ async function api(path, options = {}) {
 async function apiUpload(path, formData) {
   const headers = {};
   if (userId) headers['X-USER-ID'] = userId;
-  const res = await fetch(apiBase + path, { method: 'POST', headers, body: formData });
+  console.log('[FIXO PASS] -> POST (upload)', path);
+  let res;
+  try {
+    res = await fetch(apiBase + path, { method: 'POST', headers, body: formData });
+  } catch (networkErr) {
+    console.error('[FIXO PASS] Falha de rede em', path, networkErr);
+    throw new Error('Falha de conexão com o servidor. Verifique sua internet e tente de novo.');
+  }
   let body = null;
   try { body = await res.json(); } catch (e) { /* pode ser vazio */ }
+  console.log('[FIXO PASS] <-', res.status, path, body);
   if (!res.ok) {
+    console.error('[FIXO PASS] Erro na resposta de', path, { status: res.status, body });
     throw new Error((body && body.error) || `Erro ${res.status}`);
   }
   return body;

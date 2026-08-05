@@ -107,6 +107,24 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
   os *code points* certos (`é`=233, `ã`=227, `ú`=250). Só usar `curl` com acento em
   argumento de linha de comando neste ambiente que não é confiável.
 
+  **Nota de investigação (relato de "Salvar alterações não funciona" em produção)**:
+  não consegui reproduzir. Testei direto em `https://fixopass-painel-web.vercel.app`
+  (não num espelho local) com uma conta descartável: confirmei que o arquivo publicado
+  já tinha o código mais recente (`fetch` com `cache: 'no-store'` + checagem de
+  `x-vercel-cache`), logei pela tela de verdade, preenchi RG/data de
+  nascimento/endereço completo em "Meus dados" e **cliquei no botão de verdade** (não
+  chamei a função por JS) — deu toast de sucesso, e uma consulta direta à API alguns
+  segundos depois confirmou que os dados persistiram corretamente. CORS também não é o
+  problema (o próprio teste passou pelo preflight `OPTIONS` + `PUT` com o header
+  `X-USER-ID` sem erro). Minha hipótese mais provável pro que a pessoa viu: o
+  `GET /users/me` feito logo depois de um `PUT` pode devolver o valor antigo por alguns
+  segundos (cache/replicação com lag no backend, já registrado antes nesta seção) — se
+  ela salvou e deu F5 rápido demais, ia parecer que nada mudou, mesmo tendo salvo.
+  Adicionei `console.log`/`console.error` em `api()`/`apiUpload()` (payload enviado,
+  status e corpo da resposta, e uma mensagem clara pra falha de rede de verdade
+  separada de erro HTTP) — não porque achei o bug, mas pra dar visibilidade real da
+  próxima vez que alguém reportar isso, incluindo o navegador/passo a passo exato.
+
 Todas as três telas de entrada (`index.html`, `login.html`, `register-user.html`) têm o
 mesmo seletor de perfil no topo do formulário — `[ Sou Cliente ] | [ Sou Empresa ]` —
 pra deixar óbvio pra quem chegou na página errada onde clicar, sem precisar ler nada.
