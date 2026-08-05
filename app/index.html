@@ -60,6 +60,9 @@
     border: 1px solid var(--border); border-radius: var(--radius); padding: 32px;
   }
   .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  /* Só o cabeçalho do card de login/cadastro — não a marca da sidebar do
+     painel (essa fica à esquerda, faz parte da nav, não deve centralizar). */
+  .auth-card .brand { justify-content: center; }
   .brand-mark {
     width: 34px; height: 34px; border-radius: 8px; background: var(--accent);
     display: flex; align-items: center; justify-content: center;
@@ -137,6 +140,15 @@
   }
   .panel h3 { margin: 0 0 4px; font-size: 16px; }
   .panel .panel-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
+
+  /* Blocos de código com URL/API Key — sem isso, uma URL longa (ex.: a da
+     Railway + /auth/request/<solicitacaoId>) força largura extra e estoura
+     a lateral do card no mobile em vez de quebrar linha dentro da caixa. */
+  .code-block {
+    font-size: 13px; display: block; background: var(--surface-2); padding: 12px;
+    border-radius: 6px; max-width: 100%; overflow-wrap: anywhere; word-break: break-all;
+    overflow-x: auto; line-height: 1.6;
+  }
 
   .campo-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -336,7 +348,7 @@
       <h2>Conta criada</h2>
       <div class="sub">Guarde esta API Key com segurança — ela só aparece agora, e é o que você configura no seu ERP.</div>
       <div class="panel" style="margin-bottom:16px">
-        <code id="apikey-value" class="mono" style="font-size:13px; word-break: break-all;"></code>
+        <code id="apikey-value" class="mono code-block"></code>
       </div>
       <button class="btn-primary" style="width:100%" onclick="copyApiKey()">Copiar API Key</button>
       <button class="btn-ghost" style="width:100%; margin-top:10px" onclick="showLogin()">Já guardei, ir para o login</button>
@@ -492,7 +504,7 @@
           <div class="panel-sub">
             Se preferir não usar webhook, seu ERP pode consultar o status de uma solicitação diretamente:
           </div>
-          <code class="mono" style="font-size:13px; display:block; background:var(--surface-2); padding:12px; border-radius:6px;">
+          <code class="mono code-block">
 GET <span id="polling-example-url">http://localhost:3000</span>/auth/request/&lt;solicitacaoId&gt;<br/>
 Header: X-API-KEY: &lt;sua API Key&gt;
           </code>
@@ -504,7 +516,7 @@ Header: X-API-KEY: &lt;sua API Key&gt;
             Usada pelo seu ERP para autenticar chamadas (header X-API-KEY). Por segurança, o FIXO PASS nunca guarda nem reexibe o valor atual — se você perdeu a key, gere uma nova abaixo. Isso invalida a key anterior imediatamente.
           </div>
           <div id="apikey-panel-reveal" style="display:none; margin-bottom:16px">
-            <code id="apikey-panel-value" class="mono" style="font-size:13px; display:block; background:var(--surface-2); padding:12px; border-radius:6px; word-break: break-all;"></code>
+            <code id="apikey-panel-value" class="mono code-block"></code>
           </div>
           <div style="display:flex; gap:10px; flex-wrap:wrap">
             <button class="btn-primary" onclick="regenerarApiKey()">Gerar nova API Key</button>
