@@ -38,6 +38,34 @@
   input:disabled { opacity: 0.65; cursor: not-allowed; }
   label { font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 6px; }
   .field { margin-bottom: 16px; }
+  .field .optional { color: var(--text-dim); font-weight: 400; }
+  .field-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .field-row .field { flex: 1; min-width: 100px; }
+  .field-group-label {
+    font-size: 12.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em;
+    margin: 22px 0 10px; padding-top: 14px; border-top: 1px solid var(--border);
+  }
+
+  /* ---------- Controle de privacidade por categoria ---------- */
+  .privacy-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .privacy-tab {
+    font-size: 12.5px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim); cursor: pointer; font-family: var(--font-body);
+  }
+  .privacy-tab.active { background: rgba(227,162,61,0.15); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .campo-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .campo-row:last-child { border-bottom: none; }
+  .campo-name { font-size: 14px; font-weight: 500; }
+  .toggle-group { display: flex; gap: 6px; }
+  .toggle-btn {
+    font-size: 12px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim); cursor: pointer; font-family: var(--font-body);
+  }
+  .toggle-btn.on-liberado { background: rgba(227,162,61,0.15); border-color: var(--accent); color: var(--accent); }
+  .toggle-btn.on-bloqueado { background: rgba(193,85,75,0.15); border-color: var(--deny); color: #ffb3ab; }
 
   /* ---------- App shell (mesmo padrão visual do painel da empresa) ---------- */
   .shell { display: flex; min-height: 100vh; }
@@ -278,8 +306,45 @@
         <div class="field"><label>E-mail</label><input type="email" id="conta-email" placeholder="Carregando..." /></div>
         <div class="field"><label>CPF</label><input id="conta-cpf" placeholder="Carregando..." /></div>
         <div class="field"><label>Telefone / WhatsApp</label><input id="conta-telefone" placeholder="Carregando..." /></div>
+        <div class="field"><label>RG <span class="optional">(opcional)</span></label><input id="conta-rg" placeholder="Carregando..." /></div>
+        <div class="field"><label>Data de nascimento <span class="optional">(opcional)</span></label><input type="date" id="conta-data-nascimento" /></div>
+
+        <div class="field-group-label">Endereço <span class="optional">(opcional)</span></div>
+        <div class="field-row">
+          <div class="field" style="flex:1"><label>CEP</label><input id="conta-cep" placeholder="00000-000" /></div>
+          <div class="field" style="flex:3"><label>Logradouro</label><input id="conta-logradouro" placeholder="Rua, avenida..." /></div>
+        </div>
+        <div class="field-row">
+          <div class="field" style="flex:1"><label>Número</label><input id="conta-numero" /></div>
+          <div class="field" style="flex:2"><label>Complemento</label><input id="conta-complemento" placeholder="Apto, bloco..." /></div>
+        </div>
+        <div class="field-row">
+          <div class="field" style="flex:2"><label>Bairro</label><input id="conta-bairro" /></div>
+          <div class="field" style="flex:2"><label>Cidade</label><input id="conta-cidade" /></div>
+          <div class="field" style="flex:1"><label>UF</label><input id="conta-estado" maxlength="2" placeholder="SP" /></div>
+        </div>
+
         <button class="btn-primary" style="width:100%" onclick="salvarConta()" id="btn-salvar-conta">Salvar alterações</button>
-        <p class="panel-note">RG, data de nascimento, endereço e senha ainda não têm edição por aqui — em breve.</p>
+      </div>
+
+      <div class="panel">
+        <h3>Alterar senha</h3>
+        <div class="conta-error" id="senha-error"></div>
+        <div class="field"><label>Senha atual</label><input type="password" id="senha-atual" /></div>
+        <div class="field"><label>Nova senha</label><input type="password" id="senha-nova" placeholder="mínimo 6 caracteres" /></div>
+        <div class="field"><label>Confirmar nova senha</label><input type="password" id="senha-confirmar" /></div>
+        <button class="btn-primary" style="width:100%" onclick="alterarSenha()" id="btn-alterar-senha">Alterar senha</button>
+      </div>
+
+      <div class="panel">
+        <h3>Controle de compartilhamento por tipo de local</h3>
+        <div class="panel-sub">
+          Escolha o que liberar automaticamente pra cada tipo de estabelecimento. Isso só limita o
+          que aparece pra você aprovar — você continua vendo e confirmando cada compartilhamento na hora.
+        </div>
+        <div class="privacy-tabs" id="privacy-tabs"></div>
+        <div id="privacy-fields"></div>
+        <button class="btn-primary" style="width:100%; margin-top:16px" onclick="salvarPrivacidade()" id="btn-salvar-privacidade">Salvar preferências de privacidade</button>
       </div>
 
       <div class="panel panel-danger">
@@ -451,6 +516,17 @@ async function loadConta() {
     document.getElementById('conta-email').value = data.email || '';
     document.getElementById('conta-cpf').value = data.cpf || '';
     document.getElementById('conta-telefone').value = data.telefone || '';
+    document.getElementById('conta-rg').value = data.rg || '';
+    // GET /users/me devolve dataNascimento como ISO datetime completo
+    // ("2000-01-01T00:00:00.000Z") — <input type="date"> só aceita "YYYY-MM-DD".
+    document.getElementById('conta-data-nascimento').value = data.dataNascimento ? data.dataNascimento.slice(0, 10) : '';
+    document.getElementById('conta-cep').value = data.enderecoCep || '';
+    document.getElementById('conta-logradouro').value = data.enderecoLogradouro || '';
+    document.getElementById('conta-numero').value = data.enderecoNumero || '';
+    document.getElementById('conta-complemento').value = data.enderecoComplemento || '';
+    document.getElementById('conta-bairro').value = data.enderecoBairro || '';
+    document.getElementById('conta-cidade').value = data.enderecoCidade || '';
+    document.getElementById('conta-estado').value = data.enderecoEstado || '';
     setFotoPreview(data.fotoUrl);
 
     // Mantém o cabeçalho/localStorage em dia com o que veio da API de verdade.
@@ -464,11 +540,23 @@ async function loadConta() {
 
 async function salvarConta() {
   hideContaError();
+  const dataNascimentoInput = document.getElementById('conta-data-nascimento').value;
   const payload = {
     nomeCompleto: document.getElementById('conta-nome').value.trim(),
     email: document.getElementById('conta-email').value.trim(),
     cpf: document.getElementById('conta-cpf').value.trim(),
     telefone: document.getElementById('conta-telefone').value.trim(),
+    rg: document.getElementById('conta-rg').value.trim() || undefined,
+    // O backend espera ISO 8601 completo (z.string().datetime()) — o <input
+    // type="date"> só dá "YYYY-MM-DD", então completamos com meia-noite UTC.
+    dataNascimento: dataNascimentoInput ? new Date(dataNascimentoInput + 'T00:00:00.000Z').toISOString() : undefined,
+    enderecoCep: document.getElementById('conta-cep').value.trim() || undefined,
+    enderecoLogradouro: document.getElementById('conta-logradouro').value.trim() || undefined,
+    enderecoNumero: document.getElementById('conta-numero').value.trim() || undefined,
+    enderecoComplemento: document.getElementById('conta-complemento').value.trim() || undefined,
+    enderecoBairro: document.getElementById('conta-bairro').value.trim() || undefined,
+    enderecoCidade: document.getElementById('conta-cidade').value.trim() || undefined,
+    enderecoEstado: document.getElementById('conta-estado').value.trim() || undefined,
   };
 
   if (!payload.nomeCompleto || !payload.email || !payload.cpf || !payload.telefone) {
@@ -494,6 +582,153 @@ async function salvarConta() {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Salvar alterações';
+  }
+}
+
+async function alterarSenha() {
+  const errEl = document.getElementById('senha-error');
+  errEl.style.display = 'none';
+
+  const senhaAtual = document.getElementById('senha-atual').value;
+  const novaSenha = document.getElementById('senha-nova').value;
+  const confirmar = document.getElementById('senha-confirmar').value;
+
+  function mostrarErroSenha(msg) {
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+  }
+
+  if (!senhaAtual || !novaSenha || !confirmar) {
+    mostrarErroSenha('Preencha todos os campos.');
+    return;
+  }
+  if (novaSenha.length < 6) {
+    mostrarErroSenha('A nova senha deve ter no mínimo 6 caracteres.');
+    return;
+  }
+  if (novaSenha !== confirmar) {
+    mostrarErroSenha('A confirmação não é igual à nova senha.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-alterar-senha');
+  btn.disabled = true;
+  btn.textContent = 'Alterando...';
+  try {
+    await api('/users/me/senha', { method: 'PUT', body: JSON.stringify({ senhaAtual, novaSenha }) });
+    showToast('Senha alterada com sucesso.');
+    document.getElementById('senha-atual').value = '';
+    document.getElementById('senha-nova').value = '';
+    document.getElementById('senha-confirmar').value = '';
+  } catch (e) {
+    mostrarErroSenha('Erro ao alterar senha: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Alterar senha';
+  }
+}
+
+// ---------- Privacidade por categoria de estabelecimento ----------
+const CATEGORIAS_PRIVACIDADE = [
+  { key: 'GERAL', label: 'Geral (padrão)' },
+  { key: 'RESTAURANTE', label: 'Restaurante / Pizzaria' },
+  { key: 'CONDOMINIO', label: 'Condomínio / Portaria' },
+  { key: 'HOSPITAL', label: 'Hospital / Saúde' },
+  { key: 'HOTEL', label: 'Hotel' },
+  { key: 'LOJA', label: 'Loja' },
+  { key: 'OUTROS', label: 'Outros' },
+];
+const CAMPOS_PRIVACIDADE = [
+  { key: 'foto', label: 'Foto' },
+  { key: 'nome', label: 'Nome' },
+  { key: 'telefone', label: 'Telefone' },
+  { key: 'cpf', label: 'CPF' },
+  { key: 'rg', label: 'RG' },
+  { key: 'dataNascimento', label: 'Data de nascimento' },
+  { key: 'endereco', label: 'Endereço' },
+];
+
+let privacidadeState = {};
+let privacidadeTabAtiva = 'GERAL';
+
+async function loadPrivacidade() {
+  try {
+    const data = await api('/users/me/privacidade');
+    privacidadeState = {};
+    data.forEach((regra) => { privacidadeState[regra.categoria] = regra; });
+  } catch (e) {
+    showToast('Erro ao carregar privacidade: ' + e.message);
+  }
+  renderPrivacidadeTabs();
+  renderPrivacidadeFields();
+}
+
+function renderPrivacidadeTabs() {
+  document.getElementById('privacy-tabs').innerHTML = CATEGORIAS_PRIVACIDADE.map((c) => `
+    <button type="button" class="privacy-tab ${c.key === privacidadeTabAtiva ? 'active' : ''}" data-categoria="${c.key}">${escapeHtml(c.label)}</button>
+  `).join('');
+}
+
+function renderPrivacidadeFields() {
+  const regra = privacidadeState[privacidadeTabAtiva] || {};
+  document.getElementById('privacy-fields').innerHTML = CAMPOS_PRIVACIDADE.map((c) => {
+    const ligado = !!regra[c.key];
+    return `
+      <div class="campo-row">
+        <div class="campo-name">${escapeHtml(c.label)}</div>
+        <div class="toggle-group">
+          <button type="button" class="toggle-btn ${!ligado ? 'on-bloqueado' : ''}" data-campo="${c.key}" data-valor="false">Bloqueado</button>
+          <button type="button" class="toggle-btn ${ligado ? 'on-liberado' : ''}" data-campo="${c.key}" data-valor="true">Liberado</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById('privacy-tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-categoria]');
+  if (!btn) return;
+  privacidadeTabAtiva = btn.dataset.categoria;
+  renderPrivacidadeTabs();
+  renderPrivacidadeFields();
+});
+
+document.getElementById('privacy-fields').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-campo]');
+  if (!btn) return;
+  if (!privacidadeState[privacidadeTabAtiva]) {
+    privacidadeState[privacidadeTabAtiva] = { categoria: privacidadeTabAtiva, foto: false, nome: true, cpf: false, rg: false, dataNascimento: false, telefone: false, endereco: false };
+  }
+  privacidadeState[privacidadeTabAtiva][btn.dataset.campo] = btn.dataset.valor === 'true';
+  renderPrivacidadeFields();
+});
+
+async function salvarPrivacidade() {
+  const categorias = CATEGORIAS_PRIVACIDADE.map(({ key }) => {
+    const regra = privacidadeState[key] || { foto: false, nome: true, cpf: false, rg: false, dataNascimento: false, telefone: false, endereco: false };
+    return {
+      categoria: key,
+      foto: !!regra.foto,
+      nome: !!regra.nome,
+      cpf: !!regra.cpf,
+      rg: !!regra.rg,
+      dataNascimento: !!regra.dataNascimento,
+      telefone: !!regra.telefone,
+      endereco: !!regra.endereco,
+    };
+  });
+
+  const btn = document.getElementById('btn-salvar-privacidade');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+  try {
+    await api('/users/me/privacidade', { method: 'PUT', body: JSON.stringify({ categorias }) });
+    showToast('Preferências de privacidade salvas.');
+  } catch (e) {
+    showToast('Erro ao salvar privacidade: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Salvar preferências de privacidade';
   }
 }
 
@@ -669,6 +904,7 @@ if (!userId) {
   document.getElementById('sidebar-user-name').textContent = localStorage.getItem('fixopass_user_nome') || 'usuário';
   loadAutorizacoes();
   loadConta();
+  loadPrivacidade();
 }
 </script>
 </body>

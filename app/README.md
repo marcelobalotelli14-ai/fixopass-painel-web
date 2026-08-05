@@ -26,17 +26,26 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
     mesmo que aparece em "Copiar token" no painel da empresa) — nunca fica travado.
   - **Empresas autorizadas** (`GET /users/me/autorizacoes`) — histórico de quem recebeu
     dados e quais campos.
-  - **Meus dados** — nome completo, e-mail, CPF e telefone, carregados de
-    `GET /users/me` e editáveis, salvando via `PUT /users/me` ("Usuário edita seus
-    próprios dados" — endpoint real, achado e confirmado direto no Swagger do backend em
-    `/docs`, não documentado no `mobile-app`). RG, data de nascimento e endereço ainda
-    não têm campo de edição aqui (dá pra adicionar depois, o endpoint aceita); senha
-    também não (fluxo de troca de senha é sensível o bastante pra merecer tela própria).
+  - **Meus dados** — nome completo, e-mail, CPF, telefone, RG, data de nascimento
+    (`<input type="date">`) e endereço completo (CEP, logradouro, número, complemento,
+    bairro, cidade, UF), tudo carregado de `GET /users/me` e editável, salvando via
+    `PUT /users/me`. `dataNascimento` vira ISO 8601 completo antes de enviar (o backend
+    exige `z.string().datetime()`, o `<input type="date">` só dá `"YYYY-MM-DD"`).
     **Foto de perfil**: avatar + botão "Escolher foto" no topo da aba, upload imediato
     (assim que escolhe o arquivo, sem esperar "Salvar alterações") via `POST
     /users/me/foto` (multipart, campo `foto`) — mesmo padrão de upload que
     `POST /companies/me/logo` já usava (multer em memória → Cloudinary). É essa foto que
     a empresa recebe quando o campo "Foto" está entre os liberados num compartilhamento.
+    **Alterar senha**: painel próprio (senha atual + nova + confirmação), chama
+    `PUT /users/me/senha`.
+    **Controle de compartilhamento por tipo de local**: abas por categoria (Restaurante/
+    Pizzaria, Condomínio/Portaria, Hospital/Saúde, Hotel, Loja, Outros, Geral) com
+    switches Bloqueado/Liberado pra foto, nome, cpf, rg, data de nascimento, telefone e
+    endereço — `email` fica de fora desse controle de propósito. `GET`/`PUT
+    /users/me/privacidade`. Isso não é uma segunda aprovação por cima do consentimento
+    pontual — é um filtro que roda **antes** da tela de aprovação aparecer: o backend
+    já remove de `camposPedidos`, em `POST /auth/request`, qualquer campo que a
+    categoria da empresa solicitante não tenha sido liberada pra ver.
     No fim da página, **"Excluir minha conta"** abre um modal de confirmação e chama
     `DELETE /users/me` (implementado no `fixopass-backend`, remove o usuário e em
     cascata suas autorizações/solicitações/logs de acesso). Testado de ponta a ponta
@@ -72,6 +81,31 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
   `DELETE /users/me` depois; a empresa de teste foi **encerrada** (não excluída — ver
   seção "Encerrar conta" abaixo) pelo `DELETE /companies/me`, que passou a existir logo
   em seguida.
+
+  **Nota de teste (campos completos + privacidade por categoria)**: testado contra
+  produção com 1 usuário e 3 empresas descartáveis, uma por categoria (Restaurante,
+  Hospital, Loja). Salvei RG, data de nascimento e endereço estruturado completos
+  (`PUT /users/me`), troquei a senha (`PUT /users/me/senha`, confirmando que login com
+  a senha antiga passa a dar 401), e configurei regras de privacidade diferentes por
+  categoria (`PUT /users/me/privacidade`). Depois simulei os 3 cenários que a feature
+  precisa cobrir, todos via `POST /auth/request` de verdade:
+  - Empresa **Restaurante** pedindo NOME+CPF+TELEFONE+ENDERECO, usuário só liberou
+    NOME+TELEFONE pra essa categoria → `camposPedidos` voltou só com `["NOME","TELEFONE"]`.
+  - Empresa **Hospital** pedindo NOME+CPF+RG+DATA_NASCIMENTO+ENDERECO, usuário liberou
+    tudo isso pra Hospital → os 5 campos passaram, nada filtrado.
+  - Empresa **Loja** pedindo NOME+CPF, usuário **sem nenhuma regra configurada** pra
+    Loja nem GERAL → passou tudo sem filtro, confirmando que quem nunca mexeu nisso não
+    é afetado.
+  Depois liberei CPF pra Restaurante **pela UI de verdade** (clique no toggle + botão
+  Salvar em `user-dashboard.html`) e reescaneei o QR da mesma empresa: `camposPedidos`
+  passou a incluir CPF, fechando o ciclo completo UI → API → filtro aplicado.
+  Um detalhe que vale registrar: no meio do teste, usar `curl` com acento (ex.: "São
+  Paulo") direto num argumento de linha de comando neste ambiente Windows/Git Bash
+  corrompeu o caractere antes mesmo de sair da minha máquina (virou U+FFFD) — não é bug
+  do backend nem do frontend. Confirmei isso testando o mesmo campo pela UI de verdade
+  (`fetch`/`JSON.stringify` no navegador): "José", "São Paulo" e afins vão e voltam com
+  os *code points* certos (`é`=233, `ã`=227, `ú`=250). Só usar `curl` com acento em
+  argumento de linha de comando neste ambiente que não é confiável.
 
 Todas as três telas de entrada (`index.html`, `login.html`, `register-user.html`) têm o
 mesmo seletor de perfil no topo do formulário — `[ Sou Cliente ] | [ Sou Empresa ]` —
