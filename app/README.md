@@ -32,34 +32,27 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
     `/docs`, não documentado no `mobile-app`). RG, data de nascimento, endereço e senha
     ainda não têm campo de edição aqui (dá pra adicionar depois, o endpoint aceita).
     No fim da página, **"Excluir minha conta"** abre um modal de confirmação e chama
-    `DELETE /users/me` — **essa rota não existe no backend ainda** (só existe
-    `DELETE /users/me/autorizacoes/{companyId}`, que revoga uma autorização, não a conta
-    inteira). O botão já está pronto pro dia que o backend implementar; até lá, o clique
-    dá 404 e a tela mostra um aviso explicando isso (sem parecer erro genérico) em vez de
-    fingir que funcionou. **Isso precisa ser implementado no repositório do
-    `fixopass-backend`** — não dá pra fazer esse lado no `fixopass-painel-web` (é só
-    frontend estático, sem acesso ao código ou ao banco do backend). Spec sugerida:
-
-    ```
-    DELETE /users/me
-    Header: X-USER-ID: <uuid do usuário>  (mesmo padrão de auth já usado em GET/PUT /users/me)
-    200 -> apaga o usuário e, em cascata, LogAcesso/autorizações/solicitações ligadas a ele
-    404 -> X-USER-ID não corresponde a um usuário existente
-    ```
+    `DELETE /users/me` (implementado no `fixopass-backend`, remove o usuário e em
+    cascata suas autorizações/solicitações/logs de acesso). Testado de ponta a ponta
+    pelo clique de verdade no modal: exclui, redireciona pra `login.html` com um aviso
+    de sucesso, e a conta some do banco (login com o e-mail antigo passa a dar 401).
+    Se a rota falhar (backend fora do ar, por exemplo), a tela mostra o erro em vez de
+    fingir sucesso — sessão e dados do usuário continuam intactos nesse caso.
 
   Não há nenhum aviso de "aguarde o app nas lojas" bloqueando a tela — o app mobile
   continua sendo o único jeito de ler NFC de verdade, mas QR Code e edição de perfil já
   funcionam 100% pela web.
 
   **Nota de teste**: o fluxo completo (`POST /users` → `POST /users/login` →
-  `GET /users/me` → `PUT /users/me` → `GET /users/me` de novo) foi testado direto contra
-  a API de produção da Railway com uma conta descartável (`TESTE VERIFICACAO CLAUDE...`,
-  e-mail `claude.verify.*@example.com`) pra confirmar os nomes de campo e que a alteração
-  persiste de verdade. Não existe endpoint de exclusão de usuário na API hoje, então essa
-  conta de teste continua no banco — considerar removê-la manualmente. Também reparei que
-  um `GET /users/me` feito *imediatamente* após o `PUT` pode devolver o valor antigo por
-  alguns segundos (cache/replicação com lag no backend); a tela não sofre com isso porque
-  usa a resposta do próprio `PUT` pra atualizar a UI, sem depender de um `GET` seguinte.
+  `GET /users/me` → `PUT /users/me` → `DELETE /users/me` → `GET /users/me` de novo)
+  foi testado direto contra a API de produção da Railway com contas descartáveis
+  (e-mail `claude.verify.*@example.com`) pra confirmar os nomes de campo e que tanto a
+  edição quanto a exclusão persistem de verdade. Nenhuma conta de teste ficou no banco
+  — todas foram removidas via o próprio `DELETE /users/me` depois de usadas. Também
+  reparei que um `GET /users/me` feito *imediatamente* após o `PUT` pode devolver o
+  valor antigo por alguns segundos (cache/replicação com lag no backend); a tela não
+  sofre com isso porque usa a resposta do próprio `PUT` pra atualizar a UI, sem
+  depender de um `GET` seguinte.
 
 Todas as três telas de entrada (`index.html`, `login.html`, `register-user.html`) têm o
 mesmo seletor de perfil no topo do formulário — `[ Sou Cliente ] | [ Sou Empresa ]` —
@@ -105,10 +98,6 @@ identificador dos dois jeitos, então não precisa gravar nada diferente.
 - Sessão simplificada via `X-COMPANY-ID` guardado no navegador (`localStorage`) — trocar por cookie de sessão/JWT quando o backend tiver autenticação real.
 - Sem paginação nem busca nas listas — ok para o volume de um piloto, revisar antes de escalar.
 - Sem tela de logs/auditoria ainda (o backend já grava tudo em `LogAcesso`, só falta expor um endpoint de leitura e essa tela aqui).
-- Sem exclusão de conta de verdade ainda (exigência de LGPD) — o botão existe em
-  `user-dashboard.html`, mas depende de `DELETE /users/me` ser implementado no
-  `fixopass-backend` primeiro (ver spec na seção acima). A conta de teste
-  `claude.verify.*@example.com` continua no banco de produção por causa disso.
 
 ## Changelog da auditoria de código
 

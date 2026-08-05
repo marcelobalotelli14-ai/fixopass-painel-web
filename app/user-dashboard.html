@@ -578,11 +578,7 @@ async function confirmarExclusaoConta() {
     localStorage.removeItem('fixopass_user_email');
     location.href = '/app/login.html?conta-excluida=1';
   } catch (e) {
-    // "Erro 404" aqui normalmente significa que a rota DELETE /users/me
-    // ainda não existe no backend — não é o usuário fazendo nada errado.
-    errEl.textContent = e.message === 'Erro 404'
-      ? 'A exclusão de conta ainda não está disponível no backend. Fale com o suporte pra remover sua conta manualmente por enquanto.'
-      : 'Não foi possível excluir sua conta: ' + e.message;
+    errEl.textContent = 'Não foi possível excluir sua conta agora: ' + e.message + '. Tente novamente em instantes ou fale com o suporte.';
     errEl.style.display = 'block';
     btn.disabled = false;
     btn.textContent = 'Sim, excluir permanentemente';
