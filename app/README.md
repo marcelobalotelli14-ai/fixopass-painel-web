@@ -29,8 +29,14 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
   - **Meus dados** — nome completo, e-mail, CPF e telefone, carregados de
     `GET /users/me` e editáveis, salvando via `PUT /users/me` ("Usuário edita seus
     próprios dados" — endpoint real, achado e confirmado direto no Swagger do backend em
-    `/docs`, não documentado no `mobile-app`). RG, data de nascimento, endereço e senha
-    ainda não têm campo de edição aqui (dá pra adicionar depois, o endpoint aceita).
+    `/docs`, não documentado no `mobile-app`). RG, data de nascimento e endereço ainda
+    não têm campo de edição aqui (dá pra adicionar depois, o endpoint aceita); senha
+    também não (fluxo de troca de senha é sensível o bastante pra merecer tela própria).
+    **Foto de perfil**: avatar + botão "Escolher foto" no topo da aba, upload imediato
+    (assim que escolhe o arquivo, sem esperar "Salvar alterações") via `POST
+    /users/me/foto` (multipart, campo `foto`) — mesmo padrão de upload que
+    `POST /companies/me/logo` já usava (multer em memória → Cloudinary). É essa foto que
+    a empresa recebe quando o campo "Foto" está entre os liberados num compartilhamento.
     No fim da página, **"Excluir minha conta"** abre um modal de confirmação e chama
     `DELETE /users/me` (implementado no `fixopass-backend`, remove o usuário e em
     cascata suas autorizações/solicitações/logs de acesso). Testado de ponta a ponta
@@ -47,12 +53,26 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
   `GET /users/me` → `PUT /users/me` → `DELETE /users/me` → `GET /users/me` de novo)
   foi testado direto contra a API de produção da Railway com contas descartáveis
   (e-mail `claude.verify.*@example.com`) pra confirmar os nomes de campo e que tanto a
-  edição quanto a exclusão persistem de verdade. Nenhuma conta de teste ficou no banco
-  — todas foram removidas via o próprio `DELETE /users/me` depois de usadas. Também
-  reparei que um `GET /users/me` feito *imediatamente* após o `PUT` pode devolver o
-  valor antigo por alguns segundos (cache/replicação com lag no backend); a tela não
-  sofre com isso porque usa a resposta do próprio `PUT` pra atualizar a UI, sem
+  edição quanto a exclusão persistem de verdade. Nenhuma conta de teste de **usuário**
+  ficou no banco — todas foram removidas via o próprio `DELETE /users/me` depois de
+  usadas. Também reparei que um `GET /users/me` feito *imediatamente* após o `PUT` pode
+  devolver o valor antigo por alguns segundos (cache/replicação com lag no backend); a
+  tela não sofre com isso porque usa a resposta do próprio `PUT` pra atualizar a UI, sem
   depender de um `GET` seguinte.
+
+  **Nota de teste (foto + tela do lojista)**: testado o fluxo inteiro de ponta a ponta —
+  upload de foto (`POST /users/me/foto`) → usuário "lê" o QR Code de uma unidade de
+  teste (`POST /auth/request`) → aprova liberando NOME + TELEFONE + FOTO
+  (`POST /customer/share`) → a empresa consulta `GET /companies/me/compartilhamentos` e
+  a foto aparece, tanto na chamada crua quanto renderizada na nova view
+  "Compartilhamentos recebidos" do `index.html` (`<img>` carregando de verdade, testado
+  via `naturalWidth`/`naturalHeight`). Também testei o upload de foto pela UI de
+  verdade em `user-dashboard.html` (evento `change` real no `<input type="file">`, sem
+  pular pro `apiUpload` direto). A conta de usuário usada nesse teste foi excluída pelo
+  `DELETE /users/me` depois — **mas a empresa de teste (`Empresa Teste Claude`) continua
+  no banco de produção**, porque não existe `DELETE /companies/me` (nem qualquer outra
+  forma de uma empresa se auto-excluir) neste backend ainda. Diferente do usuário
+  comum, isso ficou pendente.
 
 Todas as três telas de entrada (`index.html`, `login.html`, `register-user.html`) têm o
 mesmo seletor de perfil no topo do formulário — `[ Sou Cliente ] | [ Sou Empresa ]` —
@@ -79,6 +99,12 @@ python3 -m http.server 5500
 - Configurar quais campos a empresa solicita (Bloqueado / Liberado / Obrigatório) por campo.
 - Criar unidades e ver o QR Code de cada uma (pronto para imprimir).
 - Copiar o token de uma unidade para gravar numa etiqueta NFC física (ver seção abaixo).
+- **Compartilhamentos recebidos** — a "tela do lojista": o que apareceu quando um
+  cliente aproximou o NFC ou leu o QR Code, com nome/telefone/e-mail/CPF (o que tiver
+  sido liberado) e a **foto do cliente**, se o campo "Foto" estava entre os liberados.
+  Puxa de `GET /companies/me/compartilhamentos` (50 mais recentes, sem paginação por
+  ora). Antes desse endpoint, essa informação só existia via webhook/polling do
+  próprio ERP da empresa — não tinha nenhum jeito de ver isso direto no painel web.
 
 ## Deixando o NFC funcionando de verdade (passo operacional, fora do software)
 

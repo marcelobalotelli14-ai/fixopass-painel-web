@@ -189,6 +189,29 @@
   .empty-state {
     text-align: center; padding: 40px 20px; color: var(--text-dim); font-size: 14px;
   }
+
+  /* ---------- Compartilhamentos recebidos ---------- */
+  .share-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin-bottom: 12px; display: flex; gap: 14px;
+  }
+  .share-avatar, .share-avatar-placeholder {
+    width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface-2); border: 1px solid var(--border);
+  }
+  .share-avatar { object-fit: cover; }
+  .share-avatar-placeholder { display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 18px; }
+  .share-body { flex: 1; min-width: 0; }
+  .share-meta { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .share-metodo {
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--accent); background: rgba(227,162,61,0.12); border-radius: 4px; padding: 2px 8px;
+  }
+  .share-data { font-size: 12px; color: var(--text-dim); }
+  .share-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px 16px; }
+  .share-field { font-size: 13px; }
+  .share-field .k { color: var(--text-dim); }
+  .share-field .v { color: var(--text); font-weight: 500; }
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: var(--surface-2); border: 1px solid var(--border); padding: 12px 20px;
@@ -303,6 +326,7 @@
       <div class="nav-item active" data-view="overview" onclick="switchView('overview')">Visão geral</div>
       <div class="nav-item" data-view="campos" onclick="switchView('campos')">Campos solicitados</div>
       <div class="nav-item" data-view="unidades" onclick="switchView('unidades')">Unidades &amp; QR Code</div>
+      <div class="nav-item" data-view="compartilhamentos" onclick="switchView('compartilhamentos')">Compartilhamentos recebidos</div>
       <div class="nav-item" data-view="integracao" onclick="switchView('integracao')">Integração ERP</div>
       <div class="sidebar-footer">
         <div class="company-name" id="sidebar-company-name">—</div>
@@ -397,6 +421,14 @@
         </div>
 
         <div id="unidades-grid" class="unidades-grid"></div>
+      </div>
+
+      <!-- Compartilhamentos recebidos -->
+      <div class="view" id="view-compartilhamentos">
+        <button class="btn-ghost back-btn" onclick="switchView('overview')">&larr; Voltar</button>
+        <h1 class="page-title">Compartilhamentos recebidos</h1>
+        <div class="page-sub">O que apareceu aqui quando um cliente aproximou o NFC ou leu o QR Code — inclui a foto quando ela foi liberada.</div>
+        <div id="compartilhamentos-list"><div class="empty-state">Carregando...</div></div>
       </div>
 
       <!-- Integração ERP -->
@@ -647,6 +679,7 @@ function switchView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
   if (view === 'unidades') loadUnidades();
+  if (view === 'compartilhamentos') loadCompartilhamentos();
   if (view === 'integracao') {
     document.getElementById('polling-example-url').textContent = apiBase;
   }
@@ -831,6 +864,51 @@ document.getElementById('unidades-grid').addEventListener('click', (e) => {
   if (btn.dataset.action === 'copiar-nfc') copiarUrlNfc(unidade.qrCodeToken);
   if (btn.dataset.action === 'ver-qr') verQr(unidade.id, unidade.nome, unidade.qrCodeToken);
 });
+
+// ---------- Compartilhamentos recebidos ----------
+const CAMPO_LABEL_LOWER = Object.fromEntries(CAMPOS.map(c => [c.key.toLowerCase(), c.label]));
+const METODO_LABEL = { NFC: 'NFC', QRCODE: 'QR Code', CONSULTA_API: 'Consulta API' };
+
+async function loadCompartilhamentos() {
+  const list = document.getElementById('compartilhamentos-list');
+  list.innerHTML = '<div class="empty-state">Carregando...</div>';
+  try {
+    const compartilhamentos = await api('/companies/me/compartilhamentos');
+    if (!compartilhamentos || compartilhamentos.length === 0) {
+      list.innerHTML = '<div class="empty-state">Nenhum compartilhamento recebido ainda.</div>';
+      return;
+    }
+    list.innerHTML = compartilhamentos.map(c => {
+      const dados = c.dados || {};
+      const fotoUrl = dados.foto;
+      const camposTexto = Object.entries(dados)
+        .filter(([campo, valor]) => campo !== 'foto' && valor !== null && valor !== undefined && valor !== '')
+        .map(([campo, valor]) => {
+          const label = CAMPO_LABEL_LOWER[campo] || campo;
+          const valorTexto = campo === 'data_nascimento' ? new Date(valor).toLocaleDateString('pt-BR') : String(valor);
+          return `<div class="share-field"><span class="k">${escapeHtml(label)}:</span> <span class="v">${escapeHtml(valorTexto)}</span></div>`;
+        })
+        .join('');
+
+      return `
+        <div class="share-card">
+          ${fotoUrl
+            ? `<img class="share-avatar" src="${escapeHtml(fotoUrl)}" alt="Foto do cliente" />`
+            : `<div class="share-avatar-placeholder">?</div>`}
+          <div class="share-body">
+            <div class="share-meta">
+              <span class="share-metodo">${escapeHtml(METODO_LABEL[c.metodo] || c.metodo)}</span>
+              <span class="share-data">${escapeHtml(new Date(c.timestamp).toLocaleString('pt-BR'))}</span>
+            </div>
+            <div class="share-fields">${camposTexto || '<div class="share-field k">Nenhum dado de texto liberado.</div>'}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state">Erro ao carregar: ${escapeHtml(e.message)}</div>`;
+  }
+}
 
 function copiarToken(token) {
   navigator.clipboard.writeText(token).then(() => showToast('Token copiado — grave numa tag NFC com um app tipo "NFC Tools".'));

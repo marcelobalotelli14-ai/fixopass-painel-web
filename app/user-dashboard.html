@@ -79,6 +79,17 @@
     padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 20px; display: none;
   }
 
+  .avatar-row { display: flex; align-items: center; gap: 16px; }
+  .avatar-preview, .avatar-placeholder {
+    width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface-2); border: 1px solid var(--border);
+  }
+  .avatar-preview { object-fit: cover; }
+  .avatar-placeholder {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-dim); font-size: 10.5px; text-align: center; line-height: 1.3;
+  }
+
   /* ---------- Excluir conta ---------- */
   .panel-danger { border-color: var(--deny); }
   .panel-danger h3 { color: #ffb3ab; }
@@ -250,6 +261,18 @@
       <h1 class="page-title">Meus dados</h1>
       <div class="page-sub">Mantenha seus dados atualizados — são eles que a empresa recebe quando você autoriza um compartilhamento.</div>
       <div class="conta-error" id="conta-error"></div>
+
+      <div class="panel">
+        <h3>Foto de perfil</h3>
+        <div class="panel-sub">Aparece pra empresa quando você autoriza compartilhar o campo "Foto".</div>
+        <div class="avatar-row">
+          <img id="conta-foto-preview" class="avatar-preview" src="" alt="Sua foto de perfil" style="display:none" />
+          <div class="avatar-placeholder" id="conta-foto-placeholder">Sem foto</div>
+          <input type="file" id="conta-foto-input" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onFotoFileChange(event)" />
+          <button type="button" class="btn-ghost" id="btn-trocar-foto" onclick="document.getElementById('conta-foto-input').click()">Escolher foto</button>
+        </div>
+      </div>
+
       <div class="panel">
         <div class="field"><label>Nome completo</label><input id="conta-nome" placeholder="Carregando..." /></div>
         <div class="field"><label>E-mail</label><input type="email" id="conta-email" placeholder="Carregando..." /></div>
@@ -330,6 +353,20 @@ async function api(path, options = {}) {
   return body;
 }
 
+// Envio multipart (upload de foto) — sem Content-Type manual, o browser
+// define o boundary correto sozinho quando o body é um FormData.
+async function apiUpload(path, formData) {
+  const headers = {};
+  if (userId) headers['X-USER-ID'] = userId;
+  const res = await fetch(apiBase + path, { method: 'POST', headers, body: formData });
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* pode ser vazio */ }
+  if (!res.ok) {
+    throw new Error((body && body.error) || `Erro ${res.status}`);
+  }
+  return body;
+}
+
 function switchView(view) {
   if (view !== 'escanear') stopScan(); // não deixa a câmera ligada em outra aba
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
@@ -370,6 +407,42 @@ function hideContaError() {
   document.getElementById('conta-error').style.display = 'none';
 }
 
+function setFotoPreview(url) {
+  const img = document.getElementById('conta-foto-preview');
+  const placeholder = document.getElementById('conta-foto-placeholder');
+  if (url) {
+    img.src = url;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    img.removeAttribute('src');
+    img.style.display = 'none';
+    placeholder.style.display = 'flex';
+  }
+}
+
+async function onFotoFileChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const btn = document.getElementById('btn-trocar-foto');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+  try {
+    const formData = new FormData();
+    formData.append('foto', file);
+    const data = await apiUpload('/users/me/foto', formData);
+    setFotoPreview(data.fotoUrl);
+    showToast('Foto atualizada.');
+  } catch (e) {
+    showToast('Erro ao enviar foto: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Escolher foto';
+    event.target.value = ''; // permite escolher o mesmo arquivo de novo depois
+  }
+}
+
 async function loadConta() {
   hideContaError();
   try {
@@ -378,6 +451,7 @@ async function loadConta() {
     document.getElementById('conta-email').value = data.email || '';
     document.getElementById('conta-cpf').value = data.cpf || '';
     document.getElementById('conta-telefone').value = data.telefone || '';
+    setFotoPreview(data.fotoUrl);
 
     // Mantém o cabeçalho/localStorage em dia com o que veio da API de verdade.
     document.getElementById('sidebar-user-name').textContent = data.nomeCompleto || 'usuário';
