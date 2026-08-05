@@ -75,18 +75,36 @@
   .panel .panel-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
   .panel-note { color: var(--text-dim); font-size: 12.5px; margin: 12px 0 0; line-height: 1.6; }
 
-  /* Aviso do app mobile — discreto, dentro do painel, nunca bloqueia nada */
-  .app-note {
-    display: flex; align-items: flex-start; gap: 10px; background: var(--surface-2); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 12px 14px; margin-bottom: 28px; font-size: 12.5px; color: var(--text-dim);
-    line-height: 1.55;
+  /* ---------- Escanear QR Code ---------- */
+  .scan-card { text-align: center; padding: 36px 24px; }
+  .scan-icon {
+    width: 64px; height: 64px; border-radius: 16px; background: rgba(227,162,61,0.12); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;
   }
-  .app-note .icon { flex-shrink: 0; }
-  .app-note button {
-    background: none; border: none; color: var(--text-dim); font-size: 16px; cursor: pointer;
-    padding: 0 0 0 8px; margin-left: auto; line-height: 1;
+  .scan-card h3 { font-size: 18px; margin-bottom: 8px; }
+  .scan-card .panel-sub { margin: 0 auto 22px; max-width: 380px; }
+  #btn-start-scan { padding: 14px 28px; font-size: 15px; }
+
+  .scan-active { display: none; }
+  .scan-video-wrap {
+    position: relative; width: 100%; max-width: 360px; aspect-ratio: 1; margin: 0 auto 16px;
+    border-radius: var(--radius); overflow: hidden; background: #000; border: 1px solid var(--border);
   }
-  .app-note button:hover { color: var(--text); }
+  .scan-video-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .scan-frame {
+    position: absolute; inset: 14%; border: 2.5px solid var(--accent); border-radius: 16px;
+    box-shadow: 0 0 0 999px rgba(0,0,0,0.35); pointer-events: none;
+  }
+  .scan-status { font-size: 13px; color: var(--text-dim); margin-bottom: 14px; }
+  .scan-error {
+    background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
+    padding: 10px 12px; border-radius: 6px; font-size: 13px; margin: 0 0 16px; display: none; text-align: left;
+  }
+  .manual-divider {
+    display: flex; align-items: center; gap: 12px; color: var(--text-dim); font-size: 12px;
+    margin: 28px 0 18px; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .manual-divider::before, .manual-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
   .auth-card-item {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
@@ -136,8 +154,8 @@
 <div class="shell">
   <div class="sidebar">
     <div class="brand"><div class="brand-mark">FP</div><div class="brand-name">FIXO PASS</div></div>
-    <button type="button" class="nav-item active" data-view="autorizacoes" onclick="switchView('autorizacoes')">Empresas autorizadas</button>
-    <button type="button" class="nav-item" data-view="autorizar" onclick="switchView('autorizar')">Autorizar por código</button>
+    <button type="button" class="nav-item active" data-view="escanear" onclick="switchView('escanear')">Escanear QR Code</button>
+    <button type="button" class="nav-item" data-view="autorizacoes" onclick="switchView('autorizacoes')">Empresas autorizadas</button>
     <button type="button" class="nav-item" data-view="conta" onclick="switchView('conta')">Meus dados</button>
     <div class="sidebar-footer">
       <div class="user-name" id="sidebar-user-name">—</div>
@@ -146,29 +164,41 @@
   </div>
 
   <div class="main">
-    <div class="app-note" id="app-note">
-      <span class="icon">📱</span>
-      <span>O app mobile (leitura de NFC e câmera para QR Code) ainda está a caminho das lojas. Enquanto isso, use "Autorizar por código" aqui no painel — é o mesmo token que a empresa mostra no QR Code dela.</span>
-      <button type="button" onclick="document.getElementById('app-note').style.display='none'" aria-label="Dispensar aviso">&times;</button>
-    </div>
+    <!-- Escanear QR Code -->
+    <div class="view active" id="view-escanear">
+      <h1 class="page-title">Escanear QR Code</h1>
+      <div class="page-sub">Aponte a câmera para o QR Code fixo exibido no balcão ou recepção da empresa.</div>
 
-    <!-- Empresas autorizadas -->
-    <div class="view active" id="view-autorizacoes">
-      <h1 class="page-title">Empresas autorizadas</h1>
-      <div class="page-sub">Empresas que já receberam algum dos seus dados, e o que foi liberado pra cada uma.</div>
-      <div id="autorizacoes-list"><div class="empty-state">Carregando...</div></div>
-    </div>
+      <div class="scan-error" id="scan-error"></div>
 
-    <!-- Autorizar por código -->
-    <div class="view" id="view-autorizar">
-      <h1 class="page-title">Autorizar por código</h1>
-      <div class="page-sub">Peça à empresa o código (token) da unidade — é o mesmo texto por trás do QR Code — e cole abaixo.</div>
+      <!-- Estado inicial: botão grande pra abrir a câmera -->
+      <div class="panel scan-card" id="scan-idle">
+        <div class="scan-icon">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7V5a1 1 0 0 1 1-1h2M20 7V5a1 1 0 0 1-1-1h-2M4 17v2a1 1 0 0 0 1 1h2M20 17v2a1 1 0 0 1-1 1h-2"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        </div>
+        <h3>Escanear QR Code do estabelecimento</h3>
+        <div class="panel-sub">A empresa já tem o QR Code fixo dela — é só apontar a câmera do seu celular ou computador.</div>
+        <button class="btn-primary" id="btn-start-scan" onclick="startScan()">📷 Abrir câmera e escanear</button>
+      </div>
+
+      <!-- Estado ativo: câmera ligada, procurando o código -->
+      <div class="panel scan-active" id="scan-active">
+        <div class="scan-video-wrap">
+          <video id="qr-video" autoplay playsinline muted></video>
+          <div class="scan-frame"></div>
+        </div>
+        <div class="scan-status" id="scan-status">Procurando QR Code...</div>
+        <button class="btn-ghost" style="width:100%" onclick="stopScan()">Cancelar</button>
+      </div>
+      <canvas id="qr-canvas" style="display:none"></canvas>
+
+      <div class="manual-divider">ou digite o código</div>
 
       <div class="panel" id="token-panel">
         <h3>Código da unidade</h3>
-        <div class="panel-sub">Consulte o pedido antes de aprovar — você vê exatamente quais dados serão enviados.</div>
+        <div class="panel-sub">Sem câmera à mão? Peça à empresa o código (token) da unidade — é o mesmo texto por trás do QR Code — e cole abaixo.</div>
         <div class="field"><label>Token</label><input id="token-input" placeholder="Cole aqui o código da unidade" /></div>
-        <button class="btn-primary" onclick="solicitarAutorizacao()">Consultar solicitação</button>
+        <button class="btn-ghost" style="width:100%" onclick="consultarManual()">Consultar solicitação</button>
       </div>
 
       <div class="panel" id="solicitacao-panel" style="display:none">
@@ -180,6 +210,13 @@
           <button class="btn-deny" onclick="responderSolicitacao(false)">Recusar</button>
         </div>
       </div>
+    </div>
+
+    <!-- Empresas autorizadas -->
+    <div class="view" id="view-autorizacoes">
+      <h1 class="page-title">Empresas autorizadas</h1>
+      <div class="page-sub">Empresas que já receberam algum dos seus dados, e o que foi liberado pra cada uma.</div>
+      <div id="autorizacoes-list"><div class="empty-state">Carregando...</div></div>
     </div>
 
     <!-- Meus dados -->
@@ -196,6 +233,12 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Leitor de QR Code (jsQR, MIT) — decodifica frames da câmera direto no navegador,
+     sem enviar imagem nenhuma pra nenhum servidor. Se o script não carregar (rede
+     bloqueada, offline etc.), o botão "Abrir câmera" mostra um erro e a pessoa ainda
+     consegue usar o campo de código manual logo abaixo. -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" onerror="window.__jsQRFailed = true;"></script>
 
 <script>
 const LABEL_CAMPO = {
@@ -232,6 +275,7 @@ async function api(path, options = {}) {
 }
 
 function switchView(view) {
+  if (view !== 'escanear') stopScan(); // não deixa a câmera ligada em outra aba
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
@@ -262,21 +306,108 @@ async function loadAutorizacoes() {
 
 let solicitacaoAtual = null;
 
-async function solicitarAutorizacao() {
+function consultarManual() {
   const token = document.getElementById('token-input').value.trim();
   if (!token) { showToast('Cole o código da unidade.'); return; }
+  consultarToken(token);
+}
+
+// Compartilhada pelo scanner de câmera e pelo campo manual — os dois só
+// precisam entregar o texto decodificado/digitado; o resto é idêntico.
+async function consultarToken(token) {
   try {
     const data = await api('/auth/request', { method: 'POST', body: JSON.stringify({ metodo: 'QRCODE', qrCodeToken: token }) });
     solicitacaoAtual = data;
+    document.getElementById('token-input').value = token;
     document.getElementById('solicitacao-empresa').textContent = data.empresa || 'Empresa';
     document.getElementById('solicitacao-mensagem').textContent = data.mensagem || '';
     document.getElementById('solicitacao-campos').innerHTML = (data.camposPedidos || []).map(c => `
       <div class="campo-row"><span>${escapeHtml(LABEL_CAMPO[c] || c)}</span><span class="campo-check">&#10003;</span></div>
     `).join('');
     document.getElementById('solicitacao-panel').style.display = 'block';
+    document.getElementById('solicitacao-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) {
     showToast('Código inválido ou erro: ' + e.message);
   }
+}
+
+// ---------- Câmera / leitura de QR Code ----------
+let qrStream = null;
+let scanning = false;
+
+function showScanError(msg) {
+  const el = document.getElementById('scan-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideScanError() {
+  document.getElementById('scan-error').style.display = 'none';
+}
+
+async function startScan() {
+  hideScanError();
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.isSecureContext) {
+    showScanError('Este navegador (ou esta página, fora de HTTPS) não permite acesso à câmera. Use o código manual abaixo.');
+    return;
+  }
+  if (typeof jsQR !== 'function') {
+    showScanError('O leitor de QR Code não carregou (conexão instável?). Use o código manual abaixo, ou recarregue a página.');
+    return;
+  }
+
+  try {
+    qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  } catch (e) {
+    showScanError('Não foi possível acessar a câmera: ' + (e && e.message ? e.message : 'permissão negada.'));
+    return;
+  }
+
+  document.getElementById('scan-idle').style.display = 'none';
+  document.getElementById('scan-active').style.display = 'block';
+  document.getElementById('scan-status').textContent = 'Procurando QR Code...';
+
+  const video = document.getElementById('qr-video');
+  video.srcObject = qrStream;
+  await video.play();
+
+  scanning = true;
+  requestAnimationFrame(scanFrame);
+}
+
+function stopScan() {
+  scanning = false;
+  if (qrStream) {
+    qrStream.getTracks().forEach((t) => t.stop());
+    qrStream = null;
+  }
+  const idle = document.getElementById('scan-idle');
+  const active = document.getElementById('scan-active');
+  if (idle) idle.style.display = 'block';
+  if (active) active.style.display = 'none';
+}
+
+function scanFrame() {
+  if (!scanning) return;
+  const video = document.getElementById('qr-video');
+  const canvas = document.getElementById('qr-canvas');
+
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    if (code && code.data) {
+      document.getElementById('scan-status').textContent = 'QR Code encontrado!';
+      const token = code.data;
+      stopScan();
+      consultarToken(token);
+      return;
+    }
+  }
+  requestAnimationFrame(scanFrame);
 }
 
 async function responderSolicitacao(aprovar) {

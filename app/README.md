@@ -15,21 +15,29 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
   (o endpoint de cadastro não devolve sessão, então não dá pra pular esse passo).
 - **`user-dashboard.html`** — painel do usuário comum: mesmo padrão visual/estrutural do
   painel da empresa (sidebar + views), só que rodando em cima dos endpoints que o
-  `mobile-app` já usa:
+  `mobile-app` já usa. Tela inicial (padrão):
+  - **Escanear QR Code** — abre a câmera do navegador (`getUserMedia`) e decodifica o QR
+    Code fixo da empresa em tempo real com **jsQR** (carregado via CDN,
+    `cdn.jsdelivr.net/npm/jsqr@1.4.0`, MIT — sem isso a página não teria como decodificar
+    frames de vídeo sem um build step). O texto decodificado vira `qrCodeToken` na mesma
+    chamada `POST /auth/request` que o app mobile já faz — mesmo contrato, só troca
+    câmera do celular por câmera do navegador. Sem câmera/permissão negada/HTTPS
+    ausente, cai automaticamente pra um campo de texto (cola o token manualmente, o
+    mesmo que aparece em "Copiar token" no painel da empresa) — nunca fica travado.
   - **Empresas autorizadas** (`GET /users/me/autorizacoes`) — histórico de quem recebeu
     dados e quais campos.
-  - **Autorizar por código** (`POST /auth/request` + `POST /customer/share`) — equivalente
-    web de "aproximar o NFC"/"ler QR Code": a pessoa cola o token da unidade (o mesmo
-    texto por trás do QR Code, disponível em "Copiar token" no painel da empresa), vê
-    exatamente quais campos serão liberados, e aceita ou recusa.
   - **Meus dados** — nome/e-mail só leitura (o backend ainda não expõe edição de perfil
     pra usuário comum, então não fingimos que existe).
 
   Não existe ainda `GET /users/me` (perfil) nem um `POST` de update — por isso "Meus
   dados" é só leitura, com nome/e-mail vindos do que foi salvo no login/cadastro, não de
-  uma consulta fresca ao backend. Um aviso discreto e dispensável (não bloqueia nada)
-  lembra que o app mobile (câmera pra QR Code, leitura de NFC de verdade) ainda está a
-  caminho das lojas.
+  uma consulta fresca ao backend. Não há nenhum aviso de "aguarde o app nas lojas"
+  bloqueando a tela — o app mobile continua sendo o único jeito de ler NFC de verdade,
+  mas QR Code já funciona 100% pela web.
+
+Todas as três telas de entrada (`index.html`, `login.html`, `register-user.html`) têm o
+mesmo seletor de perfil no topo do formulário — `[ Sou Cliente ] | [ Sou Empresa ]` —
+pra deixar óbvio pra quem chegou na página errada onde clicar, sem precisar ler nada.
 
 ## Como rodar
 

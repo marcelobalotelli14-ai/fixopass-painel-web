@@ -56,11 +56,16 @@
     background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
     padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none;
   }
-  .business-note {
-    background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim);
-    padding: 10px 12px; border-radius: 6px; font-size: 12.5px; margin-bottom: 16px; line-height: 1.5;
+  .profile-toggle {
+    display: flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px; margin-bottom: 24px; gap: 4px;
   }
-  .business-note a { color: var(--accent); font-weight: 600; }
+  .profile-toggle a {
+    flex: 1; text-align: center; padding: 8px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    color: var(--text-dim); transition: background .15s ease, color .15s ease;
+  }
+  .profile-toggle a.active { background: var(--accent); color: var(--accent-ink); }
+  .profile-toggle a:not(.active):hover { color: var(--text); }
 
   #success-screen { display: none; text-align: center; }
   #success-screen .check {
@@ -81,7 +86,10 @@
       <div class="brand-name">FIXO PASS</div>
     </div>
 
-    <div class="business-note">É uma empresa? <a href="/app?cadastro=empresa">Cadastre sua empresa aqui &rarr;</a></div>
+    <div class="profile-toggle">
+      <a href="/app/register-user.html" class="active">Sou Cliente</a>
+      <a href="/app?cadastro=empresa">Sou Empresa</a>
+    </div>
 
     <div id="error-banner" class="error-banner"></div>
 
