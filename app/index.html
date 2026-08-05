@@ -239,12 +239,16 @@
   .share-avatar { object-fit: cover; }
   .share-avatar-placeholder { display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 18px; }
   .share-body { flex: 1; min-width: 0; }
-  .share-meta { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .share-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
   .share-metodo {
     font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
     color: var(--accent); background: rgba(227,162,61,0.12); border-radius: 4px; padding: 2px 8px;
   }
-  .share-data { font-size: 12px; color: var(--text-dim); }
+  .share-pareamento {
+    font-size: 10.5px; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 3px 9px; white-space: nowrap;
+  }
+  .share-data { font-size: 12px; color: var(--text-dim); margin-left: auto; }
   .share-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px 16px; }
   .share-field { font-size: 13px; }
   .share-field .k { color: var(--text-dim); }
@@ -996,6 +1000,7 @@ async function loadCompartilhamentos() {
           <div class="share-body">
             <div class="share-meta">
               <span class="share-metodo">${escapeHtml(METODO_LABEL[c.metodo] || c.metodo)}</span>
+              ${c.accessCount ? `<span class="share-pareamento">${c.accessCount}º pareamento com este cliente</span>` : ''}
               <span class="share-data">${escapeHtml(new Date(c.timestamp).toLocaleString('pt-BR'))}</span>
             </div>
             <div class="share-fields">${camposTexto || '<div class="share-field k">Nenhum dado de texto liberado.</div>'}</div>

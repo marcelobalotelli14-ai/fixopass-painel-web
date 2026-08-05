@@ -25,11 +25,13 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
     ausente, cai automaticamente pra um campo de texto (cola o token manualmente, o
     mesmo que aparece em "Copiar token" no painel da empresa) — nunca fica travado.
   - **Empresas autorizadas** (`GET /users/me/autorizacoes`) — histórico de quem recebeu
-    dados e quais campos. Cada card tem **"Revogar acesso"**, com modal de confirmação
-    (nome da empresa incluso no texto) e `DELETE /users/me/autorizacoes/:companyId` —
-    rota que já existia desde a auditoria inicial (soft revoke: `ativo:false` +
-    `dataRevogacao`, sem apagar o registro/histórico). O card some da tela na hora, sem
-    esperar recarregar a lista inteira.
+    dados e quais campos, com um selo **"X pareamentos"** por card (`accessCount`,
+    incrementado a cada aprovação — cliente lendo o QR/NFC dessa empresa de novo). Cada
+    card tem **"Revogar acesso"**, com modal de confirmação (nome da empresa incluso no
+    texto) e `DELETE /users/me/autorizacoes/:companyId` — rota que já existia desde a
+    auditoria inicial (soft revoke: `ativo:false` + `dataRevogacao`, sem apagar o
+    registro/histórico). O card some da tela na hora, sem esperar recarregar a lista
+    inteira.
   - **Meus dados** — nome completo, e-mail, CPF, telefone, RG, data de nascimento
     (`<input type="date">`) e endereço completo (CEP, logradouro, número, complemento,
     bairro, cidade, UF), tudo carregado de `GET /users/me` e editável, salvando via
@@ -129,6 +131,25 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
   separada de erro HTTP) — não porque achei o bug, mas pra dar visibilidade real da
   próxima vez que alguém reportar isso, incluindo o navegador/passo a passo exato.
 
+  **Nota de escopo (pedido de "Upload Temporário com TTL" + "Anexo do Entregador")**:
+  deixado de fora deste ciclo, confirmado com o usuário antes de implementar. O FIXO
+  PASS não tem conceito de entrega/pedido/entregador em lugar nenhum do modelo hoje —
+  seria um domínio de produto novo do zero (quem é um "entregador"? um papel dentro de
+  `User`? a que "pedido" a foto se vincula, já que não existe model de Pedido? como
+  funciona o job de expiração automática, já que não existe scheduler/cron no
+  backend?), não um ajuste dentro do que já existe. Só implementei a parte que se
+  encaixava no modelo atual: o contador de pareamentos (`accessCount`/`lastAccessedAt`
+  em `Autorizacao`), documentado abaixo.
+
+  **Nota de teste (contador de pareamentos)**: testado contra produção com um usuário e
+  uma empresa descartáveis, aprovando o compartilhamento **duas vezes seguidas** (mesmo
+  QR Code) pra confirmar o incremento de verdade: primeira aprovação devolveu
+  `accessCount:1`, segunda devolveu `accessCount:2` — tanto na resposta de
+  `POST /customer/share` quanto em `GET /users/me/autorizacoes` e
+  `GET /companies/me/compartilhamentos` depois. Conferi também nas duas telas reais:
+  "2 pareamentos" no card de `user-dashboard.html` e "2º pareamento com este cliente"
+  nas duas entradas de "Compartilhamentos recebidos" do `index.html`.
+
 Todas as três telas de entrada (`index.html`, `login.html`, `register-user.html`) têm o
 mesmo seletor de perfil no topo do formulário — `[ Sou Cliente ] | [ Sou Empresa ]` —
 pra deixar óbvio pra quem chegou na página errada onde clicar, sem precisar ler nada.
@@ -160,6 +181,9 @@ python3 -m http.server 5500
   Puxa de `GET /companies/me/compartilhamentos` (50 mais recentes, sem paginação por
   ora). Antes desse endpoint, essa informação só existia via webhook/polling do
   próprio ERP da empresa — não tinha nenhum jeito de ver isso direto no painel web.
+  Cada entrada mostra também **"Xº pareamento com este cliente"** (`accessCount` da
+  autorização — total de vezes que esse cliente aprovou o compartilhamento com essa
+  empresa, não só desse evento específico).
 - **Encerrar conta da empresa** — seção vermelha no fim da "Visão geral" (mesma tela de
   "Dados da empresa"), com modal de confirmação explicando que o acesso ao painel, a API
   Key e o NFC/QR Code de todas as unidades param de funcionar imediatamente. Chama

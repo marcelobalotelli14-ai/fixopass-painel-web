@@ -176,7 +176,12 @@
     padding: 16px 18px; margin-bottom: 12px;
   }
   .auth-empresa { font-size: 15px; font-weight: 600; }
-  .auth-data { font-size: 12px; color: var(--text-dim); margin: 2px 0 10px; }
+  .auth-data { font-size: 12px; color: var(--text-dim); }
+  .auth-meta-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin: 2px 0 10px; }
+  .pareamentos-badge {
+    font-size: 10.5px; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 3px 9px; white-space: nowrap;
+  }
   .tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
   .tag {
     background: rgba(227,162,61,0.12); border: 1px solid var(--accent); border-radius: 20px;
@@ -495,10 +500,15 @@ async function loadAutorizacoes() {
       list.innerHTML = '<div class="empty-state">Você ainda não autorizou nenhuma empresa.</div>';
       return;
     }
-    list.innerHTML = data.map(a => `
+    list.innerHTML = data.map(a => {
+      const pareamentos = a.accessCount || 1;
+      return `
       <div class="auth-card-item" data-company-id="${escapeHtml(a.companyId)}">
         <div class="auth-empresa">${escapeHtml(a.empresa)}</div>
-        <div class="auth-data">Autorizado em ${new Date(a.dataAutorizacao).toLocaleDateString('pt-BR')}</div>
+        <div class="auth-meta-row">
+          <span class="auth-data">Autorizado em ${new Date(a.dataAutorizacao).toLocaleDateString('pt-BR')}</span>
+          <span class="pareamentos-badge">${pareamentos} pareamento${pareamentos === 1 ? '' : 's'}</span>
+        </div>
         <div class="tags-row">
           ${(a.dadosLiberados || []).map(c => `<span class="tag">${escapeHtml(LABEL_CAMPO[c] || c)}</span>`).join('')}
         </div>
@@ -507,7 +517,8 @@ async function loadAutorizacoes() {
           Revogar acesso
         </button>
       </div>
-    `).join('');
+    `;
+    }).join('');
   } catch (e) {
     list.innerHTML = `<div class="empty-state">Erro ao carregar: ${escapeHtml(e.message)}</div>`;
   }
