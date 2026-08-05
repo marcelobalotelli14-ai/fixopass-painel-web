@@ -1,0 +1,17 @@
+# Dependências
+node_modules/
+
+# Variáveis de ambiente
+.env
+.env.local
+.env.*.local
+
+# Build
+dist/
+build/
+.vercel/
+.expo/
+
+# SO / editor
+.DS_Store
+Thumbs.db

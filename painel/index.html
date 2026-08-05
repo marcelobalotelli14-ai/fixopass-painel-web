@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FIXO PASS — Painel da Empresa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #10151b;
+    --surface: #1a2129;
+    --surface-2: #212b35;
+    --border: #2e3944;
+    --text: #ece8df;
+    --text-dim: #8b96a1;
+    --accent: #e3a23d;
+    --accent-ink: #2a1d08;
+    --deny: #c1554b;
+    --radius: 10px;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font-body); min-height: 100vh;
+  }
+  h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: -0.01em; }
+  code, .mono { font-family: var(--font-mono); }
+  a { color: var(--accent); }
+  button {
+    font-family: var(--font-body); font-weight: 600; cursor: pointer;
+    border-radius: 6px; border: 1px solid transparent; padding: 10px 16px;
+    font-size: 14px; transition: transform .08s ease, filter .15s ease;
+  }
+  button:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn-deny { background: transparent; color: var(--deny); border-color: var(--deny); }
+  input, select {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 12px; border-radius: 6px; font-family: var(--font-body); font-size: 14px;
+    width: 100%;
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  label { font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 6px; }
+  .field { margin-bottom: 16px; }
+
+  /* ---------- Auth screens ---------- */
+  #auth-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .auth-card {
+    width: 100%; max-width: 400px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 32px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 8px; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; color: var(--accent-ink); font-size: 15px;
+  }
+  .brand-name { font-size: 17px; font-weight: 600; }
+  .auth-card h2 { margin: 0 0 4px; font-size: 22px; }
+  .auth-card .sub { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
+  .switch-link { text-align: center; margin-top: 18px; font-size: 13px; color: var(--text-dim); }
+  .error-banner {
+    background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
+    padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none;
+  }
+  .forgot-link { text-align: right; margin-top: -8px; margin-bottom: 16px; }
+  .forgot-link a { font-size: 13px; cursor: pointer; }
+
+  /* ---------- App shell ---------- */
+  #app-screen { display: none; min-height: 100vh; }
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 220px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border);
+    padding: 20px 14px; display: flex; flex-direction: column;
+  }
+  .sidebar .brand { padding: 0 6px; margin-bottom: 30px; }
+  .nav-item {
+    display: block; padding: 10px 12px; border-radius: 6px; color: var(--text-dim);
+    font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 2px; text-decoration: none;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--surface-2); color: var(--accent); }
+  .sidebar-footer { margin-top: auto; padding: 0 6px; }
+  .sidebar-footer .company-name { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .main { flex: 1; padding: 36px 44px; max-width: 900px; }
+  .page-title { font-size: 26px; margin: 0 0 6px; }
+  .page-sub { color: var(--text-dim); font-size: 14px; margin-bottom: 32px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 8px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px;
+  }
+  .stat-card .num { font-family: var(--font-display); font-size: 28px; font-weight: 600; }
+  .stat-card .label { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+  .stat-card.clickable { cursor: pointer; transition: transform .1s ease, border-color .15s ease; }
+  .stat-card.clickable:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+  .back-btn { margin-bottom: 18px; display: inline-flex; align-items: center; gap: 6px; }
+
+  .logo-row { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+  .logo-preview {
+    width: 64px; height: 64px; border-radius: 10px; background: var(--surface-2);
+    border: 1px solid var(--border); object-fit: cover; flex-shrink: 0;
+  }
+  .dados-actions { margin-top: 16px; display: flex; gap: 10px; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; margin-bottom: 20px;
+  }
+  .panel h3 { margin: 0 0 4px; font-size: 16px; }
+  .panel .panel-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
+
+  .campo-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .campo-row:last-child { border-bottom: none; }
+  .campo-name { font-size: 14px; font-weight: 500; }
+  .toggle-group { display: flex; gap: 6px; }
+  .toggle-btn {
+    font-size: 12px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim);
+  }
+  .toggle-btn.on-liberado { background: rgba(227,162,61,0.15); border-color: var(--accent); color: var(--accent); }
+  .toggle-btn.on-bloqueado { background: rgba(193,85,75,0.15); border-color: var(--deny); color: #ffb3ab; }
+
+  /* Unit "ticket" cards — the signature element */
+  .unidades-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+  .ticket {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    position: relative; overflow: hidden;
+  }
+  .ticket-main { padding: 18px 18px 16px; }
+  .ticket-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .ticket-addr { font-size: 12px; color: var(--text-dim); }
+  .ticket-perf {
+    height: 0; position: relative; border-top: 1px dashed var(--border); margin: 0 18px;
+  }
+  .ticket-perf::before, .ticket-perf::after {
+    content: ''; position: absolute; top: -8px; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--bg);
+  }
+  .ticket-perf::before { left: -26px; }
+  .ticket-perf::after { right: -26px; }
+  .ticket-stub {
+    padding: 14px 18px 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ticket-token { font-size: 11px; color: var(--text-dim); word-break: break-all; }
+  .ticket-token .val { color: var(--text); }
+  .ticket-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ticket-actions button { padding: 8px 12px; font-size: 12px; }
+
+  .qr-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center; z-index: 50;
+  }
+  .qr-modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 28px; text-align: center; max-width: 320px;
+  }
+  .qr-modal img { width: 220px; height: 220px; background: #fff; border-radius: 6px; padding: 10px; }
+  .qr-modal .token { font-size: 11px; color: var(--text-dim); margin-top: 14px; word-break: break-all; }
+
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: var(--text-dim); font-size: 14px;
+  }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface-2); border: 1px solid var(--border); padding: 12px 20px;
+    border-radius: 8px; font-size: 13px; display: none; z-index: 60;
+  }
+  @media (max-width: 720px) {
+    .shell { flex-direction: column; }
+    .sidebar {
+      width: 100%; flex-direction: row; overflow-x: auto; -webkit-overflow-scrolling: touch;
+      padding: 10px 10px; position: sticky; top: 0; z-index: 40; align-items: center;
+    }
+    .sidebar .brand { display: none; }
+    .nav-item { flex-shrink: 0; white-space: nowrap; margin-bottom: 0; }
+    .sidebar-footer {
+      margin: 0 0 0 auto; padding: 0; display: flex; align-items: center; flex-shrink: 0;
+    }
+    .sidebar-footer .company-name { display: none; }
+    .sidebar-footer button { white-space: nowrap; padding: 8px 12px; }
+    .main { padding: 20px 16px; }
+    .stat-grid { grid-template-columns: 1fr; }
+    .ticket-actions { width: 100%; justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-mark">FP</div>
+      <div class="brand-name">FIXO PASS</div>
+    </div>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <!-- Login -->
+    <div id="login-form">
+      <h2>Entrar no painel</h2>
+      <div class="sub">Gerencie os dados que sua empresa solicita e as unidades cadastradas.</div>
+      <div class="field">
+        <label>E-mail de contato</label>
+        <input type="email" id="login-email" placeholder="contato@suaempresa.com" />
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="login-senha" placeholder="••••••••" />
+      </div>
+      <div class="forgot-link"><a onclick="showForgotPassword()">Esqueci minha senha</a></div>
+      <button class="btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
+      <div class="switch-link">Ainda não tem conta? <a onclick="showRegister()">Cadastrar empresa</a></div>
+    </div>
+
+    <!-- Esqueci minha senha -->
+    <div id="forgot-form" style="display:none">
+      <h2>Recuperar senha</h2>
+      <div class="sub">Informe o e-mail de contato da empresa. Se ele existir, enviaremos um link para redefinir a senha.</div>
+      <div class="field">
+        <label>E-mail de contato</label>
+        <input type="email" id="forgot-email" placeholder="contato@suaempresa.com" />
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="doForgotPassword()">Enviar link de recuperação</button>
+      <div class="switch-link">Lembrou a senha? <a onclick="showLogin()">Voltar ao login</a></div>
+    </div>
+
+    <!-- Cadastro -->
+    <div id="register-form" style="display:none">
+      <h2>Cadastrar empresa</h2>
+      <div class="sub">Leva menos de um minuto.</div>
+      <div class="field"><label>Nome da empresa</label><input id="reg-nome" placeholder="Bella Pizza" /></div>
+      <div class="field"><label>CNPJ</label><input id="reg-cnpj" placeholder="00.000.000/0001-00" /></div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="reg-categoria">
+          <option value="RESTAURANTE">Restaurante</option>
+          <option value="CONDOMINIO">Condomínio</option>
+          <option value="HOSPITAL">Hospital</option>
+          <option value="HOTEL">Hotel</option>
+          <option value="LOJA">Loja</option>
+          <option value="OUTROS">Outros</option>
+        </select>
+      </div>
+      <div class="field"><label>E-mail de contato</label><input type="email" id="reg-email" placeholder="contato@suaempresa.com" /></div>
+      <div class="field"><label>Senha</label><input type="password" id="reg-senha" placeholder="mínimo 6 caracteres" /></div>
+      <button class="btn-primary" style="width:100%" onclick="doRegister()">Criar conta</button>
+      <div class="switch-link">Já tem conta? <a onclick="showLogin()">Entrar</a></div>
+    </div>
+
+    <!-- API Key revelada uma única vez -->
+    <div id="apikey-reveal" style="display:none">
+      <h2>Conta criada</h2>
+      <div class="sub">Guarde esta API Key com segurança — ela só aparece agora, e é o que você configura no seu ERP.</div>
+      <div class="panel" style="margin-bottom:16px">
+        <code id="apikey-value" class="mono" style="font-size:13px; word-break: break-all;"></code>
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="copyApiKey()">Copiar API Key</button>
+      <button class="btn-ghost" style="width:100%; margin-top:10px" onclick="showLogin()">Já guardei, ir para o login</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP SCREEN ============ -->
+<div id="app-screen">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="brand"><div class="brand-mark">FP</div><div class="brand-name">FIXO PASS</div></div>
+      <div class="nav-item active" data-view="overview" onclick="switchView('overview')">Visão geral</div>
+      <div class="nav-item" data-view="campos" onclick="switchView('campos')">Campos solicitados</div>
+      <div class="nav-item" data-view="unidades" onclick="switchView('unidades')">Unidades &amp; QR Code</div>
+      <div class="nav-item" data-view="integracao" onclick="switchView('integracao')">Integração ERP</div>
+      <div class="sidebar-footer">
+        <div class="company-name" id="sidebar-company-name">—</div>
+        <button class="btn-ghost" style="width:100%" onclick="logout()">Sair</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <!-- Visão geral -->
+      <div class="view active" id="view-overview">
+        <h1 class="page-title">Visão geral</h1>
+        <div class="page-sub">Resumo da sua conta no FIXO PASS.</div>
+        <div class="stat-grid">
+          <div class="stat-card clickable" onclick="irParaDadosEmpresa()"><div class="num" id="stat-categoria">—</div><div class="label">Categoria</div></div>
+          <div class="stat-card clickable" onclick="switchView('campos')"><div class="num" id="stat-campos">0</div><div class="label">Campos configurados</div></div>
+          <div class="stat-card clickable" onclick="switchView('unidades')"><div class="num" id="stat-unidades">0</div><div class="label">Unidades cadastradas</div></div>
+        </div>
+        <div class="panel" style="margin-top:20px" id="dados-panel">
+          <h3>Dados da empresa</h3>
+          <div class="panel-sub">CNPJ, e-mail de contato e logo cadastrados.</div>
+
+          <div id="dados-view">
+            <div class="logo-row">
+              <img id="logo-preview-view" class="logo-preview" src="" alt="Logo da empresa" style="display:none" />
+              <div id="overview-details" style="font-size:14px; color:var(--text-dim)"></div>
+            </div>
+            <button class="btn-ghost" onclick="abrirEdicaoDados()">Editar dados</button>
+          </div>
+
+          <div id="dados-edit" style="display:none">
+            <div class="logo-row">
+              <img id="logo-preview-edit" class="logo-preview" src="" alt="Pré-visualização da logo" style="display:none" />
+              <div class="field" style="margin-bottom:0; flex:1">
+                <label>Logo da empresa</label>
+                <input type="file" id="edit-logo" accept="image/*" onchange="onLogoFileChange(event)" />
+              </div>
+            </div>
+            <div class="field"><label>Nome da empresa</label><input id="edit-nome" /></div>
+            <div class="field"><label>CNPJ</label><input id="edit-cnpj" /></div>
+            <div class="field"><label>E-mail de contato</label><input type="email" id="edit-email" /></div>
+            <div class="field">
+              <label>Categoria</label>
+              <select id="edit-categoria">
+                <option value="RESTAURANTE">Restaurante</option>
+                <option value="CONDOMINIO">Condomínio</option>
+                <option value="HOSPITAL">Hospital</option>
+                <option value="HOTEL">Hotel</option>
+                <option value="LOJA">Loja</option>
+                <option value="OUTROS">Outros</option>
+              </select>
+            </div>
+            <div class="dados-actions">
+              <button class="btn-primary" onclick="salvarDadosEmpresa()">Salvar dados</button>
+              <button class="btn-ghost" onclick="cancelarEdicaoDados()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campos solicitados -->
+      <div class="view" id="view-campos">
+        <button class="btn-ghost back-btn" onclick="switchView('overview')">&larr; Voltar</button>
+        <h1 class="page-title">Campos solicitados</h1>
+        <div class="page-sub">Escolha quais dados sua empresa pede quando um cliente compartilha via NFC ou QR Code.</div>
+        <div class="panel">
+          <h3>Configuração</h3>
+          <div class="panel-sub">Marque "Liberado" para pedir o campo, e "Obrigatório" se o cliente precisa liberar para prosseguir.</div>
+          <div id="campos-list"></div>
+        </div>
+        <button class="btn-primary" onclick="salvarCampos()">Salvar configuração</button>
+      </div>
+
+      <!-- Unidades -->
+      <div class="view" id="view-unidades">
+        <button class="btn-ghost back-btn" onclick="switchView('overview')">&larr; Voltar</button>
+        <h1 class="page-title">Unidades &amp; QR Code</h1>
+        <div class="page-sub">Cada unidade tem um QR Code único — imprima e deixe no balcão/recepção.</div>
+
+        <div class="panel">
+          <h3>Nova unidade</h3>
+          <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-top:14px">
+            <div class="field" style="flex:1; min-width:180px; margin-bottom:0">
+              <label>Nome da unidade</label>
+              <input id="nova-unidade-nome" placeholder="Ex.: Centro, Filial 2..." />
+            </div>
+            <div class="field" style="flex:1; min-width:180px; margin-bottom:0">
+              <label>Endereço (opcional)</label>
+              <input id="nova-unidade-endereco" placeholder="Rua, número, bairro" />
+            </div>
+            <button class="btn-primary" onclick="criarUnidade()">Criar unidade</button>
+          </div>
+        </div>
+
+        <div id="unidades-grid" class="unidades-grid"></div>
+      </div>
+
+      <!-- Integração ERP -->
+      <div class="view" id="view-integracao">
+        <button class="btn-ghost back-btn" onclick="switchView('overview')">&larr; Voltar</button>
+        <h1 class="page-title">Integração ERP</h1>
+        <div class="page-sub">Configure como seu sistema recebe os dados assim que o cliente aprova.</div>
+
+        <div class="panel">
+          <h3>Webhook</h3>
+          <div class="panel-sub">
+            Sempre que um cliente aprovar um compartilhamento, o FIXO PASS envia os dados automaticamente pra essa URL via POST.
+            Deixe em branco se seu ERP vai consultar o status manualmente (polling).
+          </div>
+          <div class="field">
+            <label>URL do webhook</label>
+            <input id="webhook-url" placeholder="https://seu-erp.com/webhooks/fixopass" />
+          </div>
+          <button class="btn-primary" onclick="salvarWebhook()">Salvar webhook</button>
+        </div>
+
+        <div class="panel">
+          <h3>Consulta manual de status (polling)</h3>
+          <div class="panel-sub">
+            Se preferir não usar webhook, seu ERP pode consultar o status de uma solicitação diretamente:
+          </div>
+          <code class="mono" style="font-size:13px; display:block; background:var(--surface-2); padding:12px; border-radius:6px;">
+GET <span id="polling-example-url">http://localhost:3000</span>/auth/request/&lt;solicitacaoId&gt;<br/>
+Header: X-API-KEY: &lt;sua API Key&gt;
+          </code>
+        </div>
+
+        <div class="panel">
+          <h3>API Key</h3>
+          <div class="panel-sub">
+            Usada pelo seu ERP para autenticar chamadas (header X-API-KEY). Por segurança, o FIXO PASS nunca guarda nem reexibe o valor atual — se você perdeu a key, gere uma nova abaixo. Isso invalida a key anterior imediatamente.
+          </div>
+          <div id="apikey-panel-reveal" style="display:none; margin-bottom:16px">
+            <code id="apikey-panel-value" class="mono" style="font-size:13px; display:block; background:var(--surface-2); padding:12px; border-radius:6px; word-break: break-all;"></code>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <button class="btn-primary" onclick="regenerarApiKey()">Gerar nova API Key</button>
+            <button class="btn-ghost" id="btn-copiar-apikey-panel" style="display:none" onclick="copyApiKeyPanel()">Copiar API Key</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div class="qr-modal-backdrop" id="qr-modal-backdrop" onclick="if(event.target===this) closeQrModal()">
+  <div class="qr-modal">
+    <h3 id="qr-modal-title" style="margin-top:0">QR Code</h3>
+    <img id="qr-modal-img" src="" alt="QR Code da unidade" />
+    <div class="token">Token: <span id="qr-modal-token" class="mono"></span></div>
+    <button class="btn-ghost" style="width:100%; margin-top:16px" onclick="closeQrModal()">Fechar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CAMPOS = [
+  { key: 'NOME', label: 'Nome' },
+  { key: 'TELEFONE', label: 'Telefone' },
+  { key: 'EMAIL', label: 'E-mail' },
+  { key: 'CPF', label: 'CPF' },
+  { key: 'RG', label: 'RG' },
+  { key: 'DATA_NASCIMENTO', label: 'Data de nascimento' },
+  { key: 'ENDERECO', label: 'Endereço' },
+  { key: 'FOTO', label: 'Foto' },
+];
+
+const apiBase = 'https://fixopass-backend-production.up.railway.app';
+let companyId = localStorage.getItem('fixopass_company_id') || null;
+let camposState = {}; // { NOME: 'LIBERADO'|'BLOQUEADO', ... }
+let unidadesCache = []; // guarda os dados completos para os botões de ação (evita inline onclick com strings interpoladas)
+
+/**
+ * BUG CORRIGIDO: a versão anterior desta função só escapava aspas simples
+ * (para não quebrar atributos onclick="..."), mas não escapava &, <, >, "
+ * — ou seja, não era um escape de HTML de verdade. Nome/endereço de
+ * unidade, CNPJ e e-mail são texto livre digitado pela própria empresa;
+ * sem escapar corretamente, um valor com `<` ou `"` quebra o HTML da
+ * página (ou, em cenários piores, permite injetar markup/script).
+ */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[ch]));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2600);
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-banner');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError() {
+  document.getElementById('error-banner').style.display = 'none';
+}
+
+async function api(path, options = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (companyId) headers['X-COMPANY-ID'] = companyId;
+  const res = await fetch(apiBase + path, Object.assign({}, options, { headers }));
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* pode ser binário/vazio */ }
+  if (!res.ok) {
+    throw new Error((body && body.error) || `Erro ${res.status}`);
+  }
+  return body;
+}
+
+// Envio multipart (upload de arquivo) — sem Content-Type manual, o browser
+// define o boundary correto sozinho quando o body é um FormData.
+async function apiUpload(path, formData, method = 'POST') {
+  const headers = {};
+  if (companyId) headers['X-COMPANY-ID'] = companyId;
+  const res = await fetch(apiBase + path, { method, headers, body: formData });
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* pode ser binário/vazio */ }
+  if (!res.ok) {
+    throw new Error((body && body.error) || `Erro ${res.status}`);
+  }
+  return body;
+}
+
+// ---------- Auth screens ----------
+function showLogin() {
+  hideError();
+  document.getElementById('login-form').style.display = 'block';
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('apikey-reveal').style.display = 'none';
+  document.getElementById('forgot-form').style.display = 'none';
+}
+function showRegister() {
+  hideError();
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'block';
+  document.getElementById('apikey-reveal').style.display = 'none';
+  document.getElementById('forgot-form').style.display = 'none';
+}
+function showForgotPassword() {
+  hideError();
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('apikey-reveal').style.display = 'none';
+  document.getElementById('forgot-form').style.display = 'block';
+}
+
+async function doLogin() {
+  hideError();
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  try {
+    const data = await api('/companies/login', { method: 'POST', body: JSON.stringify({ emailContato: email, senha }) });
+    companyId = data.companyId;
+    localStorage.setItem('fixopass_company_id', companyId);
+    enterApp();
+  } catch (e) {
+    showError(e.message);
+  }
+}
+
+let lastApiKey = '';
+async function doRegister() {
+  hideError();
+  const payload = {
+    nome: document.getElementById('reg-nome').value.trim(),
+    cnpj: document.getElementById('reg-cnpj').value.trim(),
+    categoria: document.getElementById('reg-categoria').value,
+    emailContato: document.getElementById('reg-email').value.trim(),
+    senha: document.getElementById('reg-senha').value,
+  };
+  try {
+    const data = await api('/companies', { method: 'POST', body: JSON.stringify(payload) });
+    lastApiKey = data.apiKey;
+    document.getElementById('apikey-value').textContent = lastApiKey;
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('apikey-reveal').style.display = 'block';
+  } catch (e) {
+    showError(e.message);
+  }
+}
+
+function copyApiKey() {
+  navigator.clipboard.writeText(lastApiKey).then(() => showToast('API Key copiada.'));
+}
+
+async function doForgotPassword() {
+  hideError();
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) { showToast('Informe seu e-mail de contato.'); return; }
+  try {
+    await api('/companies/forgot-password', { method: 'POST', body: JSON.stringify({ emailContato: email }) });
+    showToast('Se o e-mail existir, enviamos um link de recuperação.');
+    showLogin();
+  } catch (e) {
+    showToast('Erro ao solicitar recuperação: ' + e.message);
+  }
+}
+
+function logout() {
+  companyId = null;
+  localStorage.removeItem('fixopass_company_id');
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  showLogin();
+}
+
+// ---------- App shell ----------
+async function enterApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  await loadCompany();
+  switchView('overview');
+}
+
+function switchView(view) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  if (view === 'unidades') loadUnidades();
+  if (view === 'integracao') {
+    document.getElementById('polling-example-url').textContent = apiBase;
+  }
+}
+
+async function loadCompany() {
+  try {
+    const company = await api('/companies/me');
+    document.getElementById('sidebar-company-name').textContent = company.nome;
+    document.getElementById('stat-categoria').textContent = capitalize(company.categoria);
+    document.getElementById('stat-campos').textContent = (company.camposSolicitados || []).length;
+    document.getElementById('stat-unidades').textContent = (company.unidades || []).length;
+    document.getElementById('overview-details').innerHTML =
+      `CNPJ: <span class="mono">${escapeHtml(company.cnpj)}</span><br/>E-mail: ${escapeHtml(company.emailContato)}`;
+
+    const logoView = document.getElementById('logo-preview-view');
+    if (company.logoUrl) {
+      logoView.src = company.logoUrl;
+      logoView.style.display = 'block';
+    } else {
+      logoView.style.display = 'none';
+    }
+
+    document.getElementById('edit-nome').value = company.nome || '';
+    document.getElementById('edit-cnpj').value = company.cnpj || '';
+    document.getElementById('edit-email').value = company.emailContato || '';
+    document.getElementById('edit-categoria').value = company.categoria || 'OUTROS';
+    const logoEdit = document.getElementById('logo-preview-edit');
+    logoEdit.src = company.logoUrl || '';
+    logoEdit.style.display = company.logoUrl ? 'block' : 'none';
+
+    camposState = {};
+    (company.camposSolicitados || []).forEach(c => { camposState[c.campo] = c.obrigatorio ? 'OBRIGATORIO' : 'LIBERADO'; });
+    renderCamposList();
+
+    document.getElementById('webhook-url').value = company.webhookUrl || '';
+  } catch (e) {
+    showToast('Sessão expirada. Faça login novamente.');
+    logout();
+  }
+}
+
+function capitalize(s) { return s ? s.charAt(0) + s.slice(1).toLowerCase() : s; }
+
+// ---------- Dados da empresa / logo ----------
+function irParaDadosEmpresa() {
+  switchView('overview');
+  abrirEdicaoDados();
+  document.getElementById('dados-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function abrirEdicaoDados() {
+  document.getElementById('dados-view').style.display = 'none';
+  document.getElementById('dados-edit').style.display = 'block';
+}
+
+function cancelarEdicaoDados() {
+  document.getElementById('dados-edit').style.display = 'none';
+  document.getElementById('dados-view').style.display = 'block';
+}
+
+function onLogoFileChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = document.getElementById('logo-preview-edit');
+    img.src = reader.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function salvarDadosEmpresa() {
+  const nome = document.getElementById('edit-nome').value.trim();
+  const cnpj = document.getElementById('edit-cnpj').value.trim();
+  const emailContato = document.getElementById('edit-email').value.trim();
+  const categoria = document.getElementById('edit-categoria').value;
+  const logoFile = document.getElementById('edit-logo').files[0];
+
+  try {
+    await api('/companies/me', { method: 'PUT', body: JSON.stringify({ nome, cnpj, emailContato, categoria }) });
+
+    if (logoFile) {
+      const formData = new FormData();
+      formData.append('logo', logoFile);
+      await apiUpload('/companies/me/logo', formData, 'POST');
+    }
+
+    showToast('Dados da empresa atualizados.');
+    cancelarEdicaoDados();
+    document.getElementById('edit-logo').value = '';
+    loadCompany();
+  } catch (e) {
+    showToast('Erro ao salvar dados: ' + e.message);
+  }
+}
+
+// ---------- Campos solicitados ----------
+function renderCamposList() {
+  const el = document.getElementById('campos-list');
+  el.innerHTML = CAMPOS.map(c => {
+    const state = camposState[c.key] || 'BLOQUEADO';
+    return `
+      <div class="campo-row">
+        <div class="campo-name">${c.label}</div>
+        <div class="toggle-group">
+          <button type="button" class="toggle-btn ${state === 'BLOQUEADO' ? 'on-bloqueado' : ''}" onclick="setCampoState('${c.key}', 'BLOQUEADO')">Bloqueado</button>
+          <button type="button" class="toggle-btn ${state === 'LIBERADO' ? 'on-liberado' : ''}" onclick="setCampoState('${c.key}', 'LIBERADO')">Liberado</button>
+          <button type="button" class="toggle-btn ${state === 'OBRIGATORIO' ? 'on-liberado' : ''}" onclick="setCampoState('${c.key}', 'OBRIGATORIO')">Obrigatório</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function setCampoState(campo, state) {
+  camposState[campo] = state;
+  renderCamposList();
+}
+
+async function salvarCampos() {
+  const campos = Object.entries(camposState)
+    .filter(([, state]) => state !== 'BLOQUEADO')
+    .map(([campo, state]) => ({ campo, obrigatorio: state === 'OBRIGATORIO' }));
+
+  try {
+    await api('/companies/me/campos-solicitados', { method: 'PUT', body: JSON.stringify({ campos }) });
+    showToast('Configuração salva.');
+    loadCompany();
+  } catch (e) {
+    showToast('Erro ao salvar: ' + e.message);
+  }
+}
+
+// ---------- Unidades ----------
+async function loadUnidades() {
+  const grid = document.getElementById('unidades-grid');
+  grid.innerHTML = '<div class="empty-state">Carregando...</div>';
+  try {
+    const unidades = await api('/companies/me/unidades');
+    unidadesCache = unidades;
+    if (unidades.length === 0) {
+      grid.innerHTML = '<div class="empty-state">Nenhuma unidade cadastrada ainda. Crie a primeira acima.</div>';
+      return;
+    }
+    // BUG CORRIGIDO: antes os botões usavam onclick="verQr('${u.nome}', ...)"
+    // com o nome da unidade interpolado direto dentro do atributo — um nome
+    // com aspas quebrava o HTML. Agora usamos data-attributes + um único
+    // listener delegado, então nenhum dado de usuário vira código JS.
+    grid.innerHTML = unidades.map(u => `
+      <div class="ticket">
+        <div class="ticket-main">
+          <div class="ticket-name">${escapeHtml(u.nome)}</div>
+          <div class="ticket-addr">${escapeHtml(u.endereco) || 'Endereço não informado'}</div>
+        </div>
+        <div class="ticket-perf"></div>
+        <div class="ticket-stub">
+          <div class="ticket-token">Token<br/><span class="val mono">${escapeHtml(u.qrCodeToken.slice(0, 14))}…</span></div>
+          <div class="ticket-actions">
+            <button class="btn-ghost" data-action="copiar-token" data-unidade-id="${escapeHtml(u.id)}">Copiar token</button>
+            <button class="btn-ghost" data-action="copiar-nfc" data-unidade-id="${escapeHtml(u.id)}">Gravar/Copiar URL NFC</button>
+            <button class="btn-primary" data-action="ver-qr" data-unidade-id="${escapeHtml(u.id)}">Ver QR</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    grid.innerHTML = `<div class="empty-state">Erro ao carregar unidades: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// Único listener delegado para os botões de cada card de unidade — evita
+// reconstruir onclick="..." com dados de usuário toda vez que a lista renderiza.
+document.getElementById('unidades-grid').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+
+  const unidade = unidadesCache.find(u => u.id === btn.dataset.unidadeId);
+  if (!unidade) return;
+
+  if (btn.dataset.action === 'copiar-token') copiarToken(unidade.qrCodeToken);
+  if (btn.dataset.action === 'copiar-nfc') copiarUrlNfc(unidade.qrCodeToken);
+  if (btn.dataset.action === 'ver-qr') verQr(unidade.id, unidade.nome, unidade.qrCodeToken);
+});
+
+function copiarToken(token) {
+  navigator.clipboard.writeText(token).then(() => showToast('Token copiado — grave numa tag NFC com um app tipo "NFC Tools".'));
+}
+
+function copiarUrlNfc(token) {
+  const url = `${apiBase}/scan/${token}`;
+  navigator.clipboard.writeText(url).then(() => showToast('URL copiada — grave como registro de URL (NDEF URI) na tag NFC.'));
+}
+
+async function criarUnidade() {
+  const nome = document.getElementById('nova-unidade-nome').value.trim();
+  const endereco = document.getElementById('nova-unidade-endereco').value.trim();
+  if (!nome) { showToast('Informe o nome da unidade.'); return; }
+  try {
+    await api('/companies/me/unidades', { method: 'POST', body: JSON.stringify({ nome, endereco: endereco || undefined }) });
+    document.getElementById('nova-unidade-nome').value = '';
+    document.getElementById('nova-unidade-endereco').value = '';
+    showToast('Unidade criada.');
+    loadUnidades();
+    loadCompany();
+  } catch (e) {
+    showToast('Erro: ' + e.message);
+  }
+}
+
+async function salvarWebhook() {
+  const url = document.getElementById('webhook-url').value.trim();
+  try {
+    await api('/companies/me/webhook', { method: 'PUT', body: JSON.stringify({ webhookUrl: url || null }) });
+    showToast(url ? 'Webhook salvo.' : 'Webhook removido.');
+  } catch (e) {
+    showToast('Erro ao salvar webhook: ' + e.message);
+  }
+}
+
+let lastApiKeyPanel = '';
+async function regenerarApiKey() {
+  const confirmar = confirm(
+    'Gerar uma nova API Key invalida a key atual imediatamente — qualquer integração do seu ERP usando a key antiga vai parar de funcionar até você atualizar. Continuar?'
+  );
+  if (!confirmar) return;
+  try {
+    const data = await api('/companies/me/api-key/regenerate', { method: 'POST' });
+    lastApiKeyPanel = data.apiKey;
+    document.getElementById('apikey-panel-value').textContent = lastApiKeyPanel;
+    document.getElementById('apikey-panel-reveal').style.display = 'block';
+    document.getElementById('btn-copiar-apikey-panel').style.display = 'inline-block';
+    showToast('Nova API Key gerada. Copie e configure no seu ERP agora.');
+  } catch (e) {
+    showToast('Erro ao gerar API Key: ' + e.message);
+  }
+}
+
+function copyApiKeyPanel() {
+  navigator.clipboard.writeText(lastApiKeyPanel).then(() => showToast('API Key copiada.'));
+}
+
+async function verQr(unidadeId, nome, token) {
+  document.getElementById('qr-modal-title').textContent = nome;
+  document.getElementById('qr-modal-token').textContent = token;
+  document.getElementById('qr-modal-img').src = '';
+  document.getElementById('qr-modal-backdrop').style.display = 'flex';
+  try {
+    const data = await api(`/companies/me/unidades/${unidadeId}/qrcode-base64`);
+    document.getElementById('qr-modal-img').src = data.qrCodeDataUrl;
+  } catch (e) {
+    showToast('Erro ao gerar QR: ' + e.message);
+  }
+}
+function closeQrModal() {
+  document.getElementById('qr-modal-backdrop').style.display = 'none';
+}
+
+// ---------- Boot ----------
+if (companyId) {
+  enterApp();
+}
+</script>
+</body>
+</html>
