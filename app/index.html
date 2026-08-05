@@ -73,6 +73,11 @@
     background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
     padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none;
   }
+  .user-note {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim);
+    padding: 10px 12px; border-radius: 6px; font-size: 12.5px; margin-bottom: 16px; line-height: 1.5;
+  }
+  .user-note a { color: var(--accent); font-weight: 600; }
   .forgot-link { text-align: right; margin-top: -8px; margin-bottom: 16px; }
   .forgot-link a { font-size: 13px; cursor: pointer; }
 
@@ -212,6 +217,8 @@
       <div class="brand-mark">FP</div>
       <div class="brand-name">FIXO PASS</div>
     </div>
+
+    <div class="user-note">É uma pessoa física em busca do app? Este painel é só para empresas — <a href="/#voce">veja como acessar por aqui &rarr;</a></div>
 
     <div id="error-banner" class="error-banner"></div>
 
@@ -893,6 +900,10 @@ function closeQrModal() {
 // ---------- Boot ----------
 if (companyId) {
   enterApp();
+} else if (new URLSearchParams(location.search).get('cadastro') === 'empresa') {
+  // Veio do link "Cadastrar minha empresa" da landing page (/app?cadastro=empresa)
+  // — abre direto na tela de cadastro em vez do login.
+  showRegister();
 }
 </script>
 </body>

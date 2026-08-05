@@ -1,6 +1,13 @@
 {
   "cleanUrls": false,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/register",
+      "destination": "/app?cadastro=empresa",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/sw.js",

@@ -152,7 +152,10 @@
   .hero-copy p.lede {
     color: var(--text-dim); font-size: 17px; line-height: 1.65; max-width: 560px; margin: 0 0 34px;
   }
-  .hero-ctas { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 46px; }
+  .hero-ctas { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .hero-user-link { font-size: 13.5px; color: var(--text-dim); margin: 0 0 26px; }
+  .hero-user-link a { color: var(--accent); font-weight: 600; }
+  .hero-user-link a:hover { text-decoration: underline; }
 
   .metric-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
   .metric-badge {
@@ -409,7 +412,7 @@
     </div>
     <div class="nav-cta">
       <a href="/app" class="btn btn-ghost btn-sm">Entrar</a>
-      <a href="/register" class="btn btn-primary btn-sm"><span class="cta-full">Cadastrar minha empresa</span><span class="cta-short">Cadastrar</span></a>
+      <a href="/app?cadastro=empresa" class="btn btn-primary btn-sm"><span class="cta-full">Cadastrar minha empresa</span><span class="cta-short">Cadastrar</span></a>
     </div>
   </nav>
 </header>
@@ -426,9 +429,10 @@
         <h1>Cadastre uma vez.<br><span class="grad-text">Compartilhe em segundos.</span></h1>
         <p class="lede">O FIXO PASS conecta você e a empresa de forma rápida, segura e autorizada — via NFC ou QR Code, sem fila, sem ficha, sem erro de digitação.</p>
         <div class="hero-ctas">
-          <a href="/register" class="btn btn-primary">Cadastrar minha empresa</a>
+          <a href="/app?cadastro=empresa" class="btn btn-primary">Cadastrar minha empresa</a>
           <a href="#como-funciona" class="btn btn-ghost">Ver como funciona</a>
         </div>
+        <p class="hero-user-link">É uma pessoa em busca do app? <a href="#voce">Veja como funciona para você &rarr;</a></p>
         <div class="metric-row">
           <div class="metric-badge glass">
             <span class="num">0%</span>
@@ -597,7 +601,7 @@
             <li><span class="ck">&#10003;</span> API FIXO PASS</li>
             <li><span class="ck">&#10003;</span> Integração com seu ERP</li>
           </ul>
-          <a href="/register" class="btn btn-primary btn-block">Cadastrar minha empresa</a>
+          <a href="/app?cadastro=empresa" class="btn btn-primary btn-block">Cadastrar minha empresa</a>
         </div>
 
         <div class="bcard glass b-span-4" style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
@@ -693,7 +697,7 @@
       <h2>Pronto para eliminar<br>o <span class="grad-text">cadastro manual?</span></h2>
       <p>Cadastre sua empresa em menos de um minuto, ou baixe o app pra começar a compartilhar.</p>
       <div class="final-ctas">
-        <a href="/register" class="btn btn-primary">Cadastrar minha empresa</a>
+        <a href="/app?cadastro=empresa" class="btn btn-primary">Cadastrar minha empresa</a>
         <a href="#voce" class="btn btn-ghost">Baixar o app</a>
       </div>
     </div>
