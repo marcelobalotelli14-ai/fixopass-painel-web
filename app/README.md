@@ -2,11 +2,12 @@
 
 Frontend estático (HTML/CSS/JS puro, sem build step) que consome a API do `fixopass-backend`.
 
-Quatro páginas independentes, cada uma com seu próprio `apiBase` inline (sem módulo JS
+Cinco páginas independentes, cada uma com seu próprio `apiBase` inline (sem módulo JS
 compartilhado, seguindo o padrão "sem build step" do projeto):
 
 - **`index.html`** — painel da empresa (B2B): login, cadastro de empresa
-  (`POST /companies`), configuração de campos, unidades/QR Code, integração ERP.
+  (`POST /companies`), configuração de campos, unidades/QR Code, integração ERP,
+  banner de trial/assinatura e checkout PIX (ver seção própria abaixo).
 - **`login.html`** — login do usuário comum (B2C): `POST /users/login`. Já logado,
   redireciona direto pra `user-dashboard.html` (sem tela de espera no meio do caminho).
 - **`register-user.html`** — cadastro do usuário comum (B2C): `POST /users` (mesmos
@@ -149,6 +150,53 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
   `GET /companies/me/compartilhamentos` depois. Conferi também nas duas telas reais:
   "2 pareamentos" no card de `user-dashboard.html` e "2º pareamento com este cliente"
   nas duas entradas de "Compartilhamentos recebidos" do `index.html`.
+
+  **Trial de 15 dias, bloqueio e checkout PIX automático** (`index.html`): banner fixo no
+  topo do painel (visível em todas as abas) mostra "restam X dias grátis" enquanto
+  `status === 'TRIAL'`, ou fica vermelho com "assinatura expirou" quando `EXPIRED`/
+  `BLOCKED`, sempre com um botão **"Renovar agora"**. Clicar abre um modal que chama
+  `POST /companies/me/pix` (backend cria uma cobrança PIX **de verdade** no Mercado
+  Pago — não é mock) e mostra o QR Code + código "copia e cola" com botão de copiar. O
+  modal fica em polling (`GET /companies/me` a cada 5s) até `status` virar `ACTIVE`
+  (o que acontece quando o Mercado Pago confirma o pagamento via
+  `POST /webhooks/mercadopago` no backend), aí fecha sozinho com um toast de sucesso.
+  Sem `MERCADOPAGO_ACCESS_TOKEN` configurado no servidor (ainda não está, em produção,
+  no momento em que isso foi escrito), o backend devolve `503` com uma mensagem clara —
+  o modal mostra esse erro tal como veio, em vez de fingir que gerou um QR Code
+  funcional. Nada de e-mail/WhatsApp como alternativa: o fluxo é 100% pelo próprio
+  gateway, mesmo enquanto as credenciais reais não são configuradas.
+
+  **Nota de teste**: registrei uma empresa descartável em produção
+  (`POST /companies`) e confirmei via `GET`/`POST` direto na API que
+  `daysLeftInTrial:15` vem certo no cadastro. Testei o carregamento real da página
+  (`localStorage` com o `companyId` de teste, servida por `python -m http.server`
+  contra a API de produção) e confirmei via inspeção do DOM que o banner renderizou
+  exatamente `"Período de teste: restam 15 dias grátis."` com a classe CSS `trial`
+  aplicada. A ferramenta de automação de navegador caiu no meio do teste (extensão
+  desconectou) antes de eu conseguir clicar em "Renovar agora" pela UI de verdade —
+  como substituto, chamei `POST /companies/me/pix` direto na API de produção com o
+  `X-COMPANY-ID` real da empresa de teste e confirmei que devolve exatamente a
+  mensagem de erro 503 que o modal exibe (`MERCADOPAGO_ACCESS_TOKEN` ainda não
+  configurado no Railway) — é o mesmo texto que `gerarPix()` mostra no `catch`, então
+  o caminho de erro está coberto, só não vi o clique em pixels de verdade. A empresa de
+  teste foi encerrada (`DELETE /companies/me`) depois, e confirmei que o login dela
+  passou a dar 401 "Esta conta foi encerrada.".
+
+- **`admin-dashboard.html`** — painel Super Admin: acesso por segredo compartilhado
+  (`X-ADMIN-SECRET`, guardado em `localStorage` depois do primeiro "Entrar" — mesmo
+  padrão MVP das outras telas, sem JWT). Cards de métricas no topo (`GET
+  /admin/dashboard-stats`: total de empresas, ativas, em teste, inadimplentes,
+  faturamento estimado, volume de pareamentos), um gráfico de barras horizontais
+  logo abaixo comparando Ativas/Em teste/Inadimplentes/Encerradas (mesmas cores das
+  badges de status da tabela, sem lib externa) e uma tabela com todas as empresas
+  (`GET /admin/companies`) com ações por linha: **Editar preço** (prompt em R$, `null`
+  se deixar em branco pra voltar ao padrão), **+15 dias** (soma trial e destrava sozinho
+  se a empresa estava `EXPIRED`), **Bloquear/Desbloquear** (alterna `status` pra
+  `BLOCKED`/`ACTIVE`) e **Excluir** (mesmo soft-delete de sempre, com modal de
+  confirmação — desabilitado pra empresas já encerradas). Se o segredo digitado estiver
+  errado, a própria chamada à API devolve `401` e a tela volta pro login com o aviso; se
+  `ADMIN_SECRET` não estiver configurado no servidor (`503`), mostra uma mensagem
+  específica em vez de "senha errada".
 
 Todas as três telas de entrada (`index.html`, `login.html`, `register-user.html`) têm o
 mesmo seletor de perfil no topo do formulário — `[ Sou Cliente ] | [ Sou Empresa ]` —

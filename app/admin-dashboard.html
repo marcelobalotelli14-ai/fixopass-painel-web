@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FIXO PASS — Painel Super Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #10151b;
+    --surface: #1a2129;
+    --surface-2: #212b35;
+    --border: #2e3944;
+    --text: #ece8df;
+    --text-dim: #8b96a1;
+    --accent: #e3a23d;
+    --accent-ink: #2a1d08;
+    --deny: #c1554b;
+    --ok: #6fbf82;
+    --radius: 10px;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font-body); min-height: 100vh;
+  }
+  h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: -0.01em; }
+  code, .mono { font-family: var(--font-mono); }
+  button {
+    font-family: var(--font-body); font-weight: 600; cursor: pointer;
+    border-radius: 6px; border: 1px solid transparent; padding: 9px 14px;
+    font-size: 13px; transition: transform .08s ease, filter .15s ease;
+  }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: .5; cursor: default; }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn-deny { background: transparent; color: var(--deny); border-color: var(--deny); }
+  .btn-deny:hover { background: rgba(193,85,75,0.12); }
+  input, select {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 12px; border-radius: 6px; font-family: var(--font-body); font-size: 14px;
+    width: 100%;
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  label { font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 6px; }
+
+  /* ---------- Login gate ---------- */
+  #login-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .login-card {
+    width: 100%; max-width: 380px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 32px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; justify-content: center; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 8px; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; color: var(--accent-ink); font-size: 15px;
+  }
+  .brand-name { font-size: 17px; font-weight: 600; }
+  .login-card h2 { margin: 0 0 4px; font-size: 20px; text-align: center; }
+  .login-card .sub { color: var(--text-dim); font-size: 13.5px; margin-bottom: 22px; text-align: center; }
+  .field { margin-bottom: 16px; }
+  .error-banner {
+    background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
+    padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none;
+  }
+
+  /* ---------- App ---------- */
+  #app-screen { display: none; }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 32px; border-bottom: 1px solid var(--border);
+  }
+  .container { padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
+  .page-title { font-size: 24px; margin: 0 0 24px; }
+
+  .stat-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px;
+  }
+  .stat-card .num { font-family: var(--font-display); font-size: 26px; font-weight: 700; }
+  .stat-card .label { font-size: 12.5px; color: var(--text-dim); margin-top: 4px; }
+  .stat-card.warn .num { color: var(--deny); }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px 22px; overflow-x: auto;
+  }
+  .panel-title {
+    margin: 0 0 16px; font-size: 12px; color: var(--text-dim); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+
+  /* ---------- Gráfico: empresas por status ---------- */
+  .bar-chart { display: flex; flex-direction: column; gap: 14px; }
+  .bar-row { display: grid; grid-template-columns: 110px 1fr 40px; align-items: center; gap: 12px; }
+  .bar-row .bar-label { font-size: 12.5px; color: var(--text-dim); }
+  .bar-row .bar-track { background: var(--surface-2); border-radius: 5px; height: 10px; position: relative; }
+  .bar-row .bar-fill {
+    position: absolute; top: 0; left: 0; height: 100%; border-radius: 5px; min-width: 4px;
+    transition: width .5s ease;
+  }
+  .bar-row .bar-value {
+    font-size: 12.5px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .bar-fill.st-ativas { background: var(--ok); }
+  .bar-fill.st-teste { background: var(--accent); }
+  .bar-fill.st-inadimplentes { background: var(--deny); }
+  .bar-fill.st-encerradas { background: var(--text-dim); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+  th, td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { color: var(--text-dim); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  tr:last-child td { border-bottom: none; }
+  .badge {
+    display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .badge-trial { background: rgba(227,162,61,0.15); color: var(--accent); }
+  .badge-active { background: rgba(111,191,130,0.15); color: var(--ok); }
+  .badge-expired, .badge-blocked { background: rgba(193,85,75,0.15); color: #ff9d92; }
+  .badge-encerrada { background: var(--surface-2); color: var(--text-dim); }
+  .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .row-actions button { padding: 6px 10px; font-size: 11.5px; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); font-size: 14px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface-2); border: 1px solid var(--border); padding: 12px 20px;
+    border-radius: 8px; font-size: 13px; display: none; z-index: 60;
+  }
+
+  .confirm-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .confirm-modal-backdrop.is-open { display: flex; }
+  .confirm-modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 26px; max-width: 400px; width: 100%;
+  }
+  .confirm-modal.danger { border-color: var(--deny); }
+  .confirm-modal h3 { margin: 0 0 10px; font-size: 18px; }
+  .confirm-modal p { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; margin: 0 0 16px; }
+  .confirm-modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+
+  @media (max-width: 720px) {
+    .topbar, .container { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN GATE ============ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="brand"><div class="brand-mark">FP</div><div class="brand-name">FIXO PASS</div></div>
+    <h2>Painel Super Admin</h2>
+    <div class="sub">Acesso restrito — informe o segredo de administrador.</div>
+    <div class="error-banner" id="login-error"></div>
+    <div class="field">
+      <label>Segredo de admin</label>
+      <input type="password" id="admin-secret-input" placeholder="X-ADMIN-SECRET" onkeydown="if(event.key==='Enter') entrar()" />
+    </div>
+    <button class="btn-primary" style="width:100%" onclick="entrar()">Entrar</button>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app-screen">
+  <div class="topbar">
+    <div class="brand" style="margin-bottom:0"><div class="brand-mark">FP</div><div class="brand-name">FIXO PASS — Super Admin</div></div>
+    <button class="btn-ghost" onclick="sair()">Sair</button>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">Visão geral</h1>
+
+    <div class="stat-grid" id="stat-grid">
+      <div class="stat-card"><div class="num" id="stat-total">—</div><div class="label">Total de empresas</div></div>
+      <div class="stat-card"><div class="num" id="stat-ativas">—</div><div class="label">Ativas</div></div>
+      <div class="stat-card"><div class="num" id="stat-teste">—</div><div class="label">Em teste</div></div>
+      <div class="stat-card warn"><div class="num" id="stat-inadimplentes">—</div><div class="label">Inadimplentes</div></div>
+      <div class="stat-card"><div class="num" id="stat-faturamento">—</div><div class="label">Faturamento estimado/mês</div></div>
+      <div class="stat-card"><div class="num" id="stat-pareamentos">—</div><div class="label">Pareamentos (total)</div></div>
+    </div>
+
+    <div class="panel" style="margin-bottom: 20px">
+      <h2 class="panel-title">Empresas por status</h2>
+      <div class="bar-chart" id="status-chart"></div>
+    </div>
+
+    <div class="panel">
+      <table>
+        <thead>
+          <tr>
+            <th>Empresa</th>
+            <th>Categoria</th>
+            <th>Status</th>
+            <th>Trial</th>
+            <th>Próx. vencimento</th>
+            <th>Preço/mês</th>
+            <th>Conta</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="companies-tbody">
+          <tr><td colspan="8"><div class="empty-state">Carregando...</div></td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:11.5px; color:var(--text-dim); margin-top:12px">* preço customizado (diferente do padrão de R$29,90)</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmação — excluir empresa -->
+<div class="confirm-modal-backdrop" id="excluir-modal-backdrop" onclick="if(event.target===this) fecharModalExcluir()">
+  <div class="confirm-modal danger">
+    <h3>Encerrar esta empresa?</h3>
+    <p id="excluir-modal-texto"></p>
+    <div class="confirm-modal-actions">
+      <button class="btn-ghost" style="flex:1" onclick="fecharModalExcluir()">Cancelar</button>
+      <button class="btn-deny" style="flex:1" id="btn-confirmar-exclusao" onclick="confirmarExclusao()">Sim, encerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const apiBase = 'https://fixopass-backend-production.up.railway.app';
+let adminSecret = localStorage.getItem('fixopass_admin_secret') || null;
+let companiesCache = [];
+let companyIdParaExcluir = null;
+
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2600);
+}
+
+async function api(path, options = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (adminSecret) headers['X-ADMIN-SECRET'] = adminSecret;
+  const res = await fetch(apiBase + path, Object.assign({}, options, { headers }));
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* pode ser vazio */ }
+  if (res.status === 401) {
+    localStorage.removeItem('fixopass_admin_secret');
+    adminSecret = null;
+    mostrarLogin('Segredo de admin inválido — tente novamente.');
+    throw new Error((body && body.error) || 'Não autorizado');
+  }
+  if (!res.ok) {
+    throw new Error((body && body.error) || `Erro ${res.status}`);
+  }
+  return body;
+}
+
+function mostrarLogin(erro) {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  const errEl = document.getElementById('login-error');
+  if (erro) { errEl.textContent = erro; errEl.style.display = 'block'; }
+  else { errEl.style.display = 'none'; }
+}
+
+async function entrar() {
+  const valor = document.getElementById('admin-secret-input').value.trim();
+  if (!valor) { showToast('Informe o segredo de admin.'); return; }
+  adminSecret = valor;
+  try {
+    // Usa a própria listagem pra validar o segredo — se der 401, api() já
+    // volta pra tela de login sozinha; se der 503, avisa que o servidor
+    // ainda não está configurado (não é senha errada).
+    await carregarTudo();
+    localStorage.setItem('fixopass_admin_secret', adminSecret);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+  } catch (e) {
+    if (e.message && e.message.includes('ADMIN_SECRET ausente')) {
+      mostrarLogin('Painel admin não configurado no servidor ainda (ADMIN_SECRET ausente no Railway).');
+    } else if (!document.getElementById('login-error').textContent) {
+      mostrarLogin(e.message);
+    }
+  }
+}
+
+function sair() {
+  localStorage.removeItem('fixopass_admin_secret');
+  adminSecret = null;
+  document.getElementById('admin-secret-input').value = '';
+  mostrarLogin();
+}
+
+async function carregarTudo() {
+  const [stats, companies] = await Promise.all([
+    api('/admin/dashboard-stats'),
+    api('/admin/companies'),
+  ]);
+  renderStats(stats);
+  companiesCache = companies;
+  renderCompanies(companies);
+}
+
+function formatMoney(centavos) {
+  return ((centavos || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function renderStats(stats) {
+  document.getElementById('stat-total').textContent = stats.totalEmpresas;
+  document.getElementById('stat-ativas').textContent = stats.ativas;
+  document.getElementById('stat-teste').textContent = stats.emTeste;
+  document.getElementById('stat-inadimplentes').textContent = stats.inadimplentes;
+  document.getElementById('stat-faturamento').textContent = formatMoney(stats.faturamentoEstimadoCentavos);
+  document.getElementById('stat-pareamentos').textContent = stats.volumePareamentos;
+  renderStatusChart(stats);
+}
+
+// Barras horizontais simples (sem lib externa) comparando a contagem de
+// empresas em cada status — mesmas cores das badges da tabela, pra manter
+// a mesma linguagem visual (verde = ativa, dourado = trial, vermelho =
+// inadimplente, cinza = encerrada).
+function renderStatusChart(stats) {
+  const dados = [
+    { label: 'Ativas', valor: stats.ativas, cls: 'st-ativas' },
+    { label: 'Em teste', valor: stats.emTeste, cls: 'st-teste' },
+    { label: 'Inadimplentes', valor: stats.inadimplentes, cls: 'st-inadimplentes' },
+    { label: 'Encerradas', valor: stats.encerradas ?? 0, cls: 'st-encerradas' },
+  ];
+  const max = Math.max(1, ...dados.map((d) => d.valor));
+  document.getElementById('status-chart').innerHTML = dados.map((d) => `
+    <div class="bar-row" title="${d.label}: ${d.valor} empresa${d.valor === 1 ? '' : 's'}">
+      <div class="bar-label">${d.label}</div>
+      <div class="bar-track"><div class="bar-fill ${d.cls}" style="width:${((d.valor / max) * 100).toFixed(1)}%"></div></div>
+      <div class="bar-value">${d.valor}</div>
+    </div>
+  `).join('');
+}
+
+function badgeStatus(company) {
+  if (!company.ativa) return '<span class="badge badge-encerrada">Encerrada</span>';
+  const map = {
+    TRIAL: 'badge-trial', ACTIVE: 'badge-active', EXPIRED: 'badge-expired', BLOCKED: 'badge-blocked',
+  };
+  const label = { TRIAL: 'Trial', ACTIVE: 'Ativa', EXPIRED: 'Expirada', BLOCKED: 'Bloqueada' }[company.status] || company.status;
+  return `<span class="badge ${map[company.status] || ''}">${label}</span>`;
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('pt-BR');
+}
+
+function renderCompanies(companies) {
+  const tbody = document.getElementById('companies-tbody');
+  if (!companies.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Nenhuma empresa cadastrada.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = companies.map((c) => `
+    <tr>
+      <td>
+        <div style="font-weight:600">${escapeHtml(c.nome)}</div>
+        <div style="font-size:11.5px; color:var(--text-dim)">${escapeHtml(c.emailContato)}</div>
+      </td>
+      <td>${escapeHtml(c.categoria)}</td>
+      <td>${badgeStatus(c)}</td>
+      <td>${c.status === 'TRIAL' ? (c.daysLeftInTrial + ' dia' + (c.daysLeftInTrial === 1 ? '' : 's')) : '—'}</td>
+      <td>${formatDate(c.nextDueDate)}</td>
+      <td>${c.precoCustomizado ? formatMoney(c.precoMensalCentavos) + ' *' : formatMoney(c.precoMensalCentavos)}</td>
+      <td>${c.ativa ? 'Ativa' : 'Encerrada'}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-ghost" onclick="editarPreco('${c.id}')">Editar preço</button>
+          <button class="btn-ghost" onclick="adicionarDiasTrial('${c.id}')">+15 dias</button>
+          <button class="btn-ghost" onclick="toggleBloqueio('${c.id}', '${c.status}')">${c.status === 'BLOCKED' ? 'Desbloquear' : 'Bloquear'}</button>
+          <button class="btn-deny" ${!c.ativa ? 'disabled' : ''} onclick="abrirModalExcluir('${c.id}', '${escapeHtml(c.nome).replace(/'/g, "\\'")}')">Excluir</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function editarPreco(id) {
+  const company = companiesCache.find((c) => c.id === id);
+  const atual = ((company.precoMensalCentavos || 0) / 100).toFixed(2);
+  const valor = prompt(`Novo preço mensal para ${company.nome} (em R$, ex.: 29.90). Deixe vazio para voltar ao padrão:`, atual);
+  if (valor === null) return;
+
+  let precoMensalCentavos;
+  if (valor.trim() === '') {
+    precoMensalCentavos = null;
+  } else {
+    const numero = Number(valor.replace(',', '.'));
+    if (isNaN(numero) || numero < 0) { showToast('Valor inválido.'); return; }
+    precoMensalCentavos = Math.round(numero * 100);
+  }
+
+  try {
+    await api(`/admin/companies/${id}`, { method: 'PUT', body: JSON.stringify({ precoMensalCentavos }) });
+    showToast('Preço atualizado.');
+    await carregarTudo();
+  } catch (e) {
+    showToast('Erro ao atualizar preço: ' + e.message);
+  }
+}
+
+async function adicionarDiasTrial(id) {
+  try {
+    await api(`/admin/companies/${id}`, { method: 'PUT', body: JSON.stringify({ diasExtras: 15 }) });
+    showToast('+15 dias de teste adicionados.');
+    await carregarTudo();
+  } catch (e) {
+    showToast('Erro ao adicionar dias: ' + e.message);
+  }
+}
+
+async function toggleBloqueio(id, statusAtual) {
+  const novoStatus = statusAtual === 'BLOCKED' ? 'ACTIVE' : 'BLOCKED';
+  try {
+    await api(`/admin/companies/${id}`, { method: 'PUT', body: JSON.stringify({ status: novoStatus }) });
+    showToast(novoStatus === 'BLOCKED' ? 'Empresa bloqueada.' : 'Empresa desbloqueada.');
+    await carregarTudo();
+  } catch (e) {
+    showToast('Erro ao alterar status: ' + e.message);
+  }
+}
+
+function abrirModalExcluir(id, nome) {
+  companyIdParaExcluir = id;
+  document.getElementById('excluir-modal-texto').textContent =
+    `Isso encerra a conta de "${nome}" (mesmo efeito de quando a própria empresa se encerra): painel, API Key e NFC/QR Code de todas as unidades param de funcionar. O histórico é preservado — nada é apagado.`;
+  document.getElementById('excluir-modal-backdrop').classList.add('is-open');
+}
+
+function fecharModalExcluir() {
+  document.getElementById('excluir-modal-backdrop').classList.remove('is-open');
+  companyIdParaExcluir = null;
+}
+
+async function confirmarExclusao() {
+  if (!companyIdParaExcluir) return;
+  const btn = document.getElementById('btn-confirmar-exclusao');
+  btn.disabled = true;
+  btn.textContent = 'Encerrando...';
+  try {
+    await api(`/admin/companies/${companyIdParaExcluir}`, { method: 'DELETE' });
+    showToast('Empresa encerrada.');
+    fecharModalExcluir();
+    await carregarTudo();
+  } catch (e) {
+    showToast('Erro ao encerrar empresa: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sim, encerrar';
+  }
+}
+
+// ---------- Boot ----------
+(async function init() {
+  if (!adminSecret) { mostrarLogin(); return; }
+  try {
+    await carregarTudo();
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+  } catch (e) {
+    // api() já cuida do 401 voltando pra tela de login; outros erros (ex.
+    // 503 de ADMIN_SECRET não configurado) também caem aqui.
+    if (!document.getElementById('login-error').textContent) {
+      mostrarLogin(e.message);
+    }
+  }
+})();
+</script>
+</body>
+</html>

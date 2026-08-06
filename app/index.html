@@ -258,6 +258,40 @@
     background: var(--surface-2); border: 1px solid var(--border); padding: 12px 20px;
     border-radius: 8px; font-size: 13px; display: none; z-index: 60;
   }
+
+  /* ---------- Assinatura: banner de trial / expirado ---------- */
+  .trial-banner {
+    display: none; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 12px 18px; font-size: 13.5px; border-radius: var(--radius); border: 1px solid;
+    flex-wrap: wrap; margin-bottom: 24px;
+  }
+  .trial-banner.trial { background: rgba(227, 162, 61, 0.12); color: var(--accent); border-color: var(--accent); }
+  .trial-banner.expired { background: rgba(193, 85, 75, 0.14); color: #ffb3ab; border-color: var(--deny); }
+  .trial-banner button { padding: 7px 14px; font-size: 12.5px; flex-shrink: 0; }
+  .trial-banner.trial button { background: var(--accent); color: var(--accent-ink); }
+  .trial-banner.expired button { background: var(--deny); color: #fff; }
+
+  /* ---------- Checkout PIX ---------- */
+  .pix-modal { max-width: 380px; text-align: center; }
+  .pix-modal .pix-status { font-size: 13px; color: var(--text-dim); margin-bottom: 16px; }
+  .pix-modal img.pix-qr { width: 220px; height: 220px; background: #fff; border-radius: 6px; padding: 10px; }
+  .pix-modal .pix-valor { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin: 14px 0 4px; }
+  .pix-copia-cola {
+    display: block; width: 100%; word-break: break-all; text-align: left; font-size: 11px;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 10px; margin: 14px 0; max-height: 90px; overflow-y: auto;
+  }
+  .pix-aguardando { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; font-size: 12.5px; color: var(--text-dim); }
+  .pix-spinner {
+    width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border);
+    border-top-color: var(--accent); animation: pix-spin 0.8s linear infinite;
+  }
+  @keyframes pix-spin { to { transform: rotate(360deg); } }
+  .pix-erro {
+    background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
+    padding: 10px 12px; border-radius: 6px; font-size: 13px; margin: 14px 0; text-align: left;
+  }
+  .pix-sucesso { color: #8fd19e; font-size: 14px; font-weight: 600; margin: 14px 0; }
   @media (max-width: 720px) {
     .shell { flex-direction: column; }
     .sidebar {
@@ -377,6 +411,11 @@
     </div>
 
     <div class="main">
+      <div class="trial-banner" id="trial-banner">
+        <span id="trial-banner-text"></span>
+        <button id="trial-banner-btn" onclick="abrirModalPix()">Renovar agora</button>
+      </div>
+
       <!-- Visão geral -->
       <div class="view active" id="view-overview">
         <h1 class="page-title">Visão geral</h1>
@@ -560,6 +599,16 @@ Header: X-API-KEY: &lt;sua API Key&gt;
       <button class="btn-ghost" style="flex:1" onclick="fecharModalEncerrarConta()">Cancelar</button>
       <button class="btn-deny" style="flex:1" id="btn-confirmar-encerramento" onclick="confirmarEncerramentoConta()">Sim, encerrar conta</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal de checkout PIX (renovação da assinatura) -->
+<div class="confirm-modal-backdrop" id="pix-modal-backdrop" onclick="if(event.target===this) fecharModalPix()">
+  <div class="confirm-modal pix-modal">
+    <h3 style="margin-top:0">Renovar assinatura FIXO PASS</h3>
+    <div class="pix-status" id="pix-status">Gerando cobrança PIX...</div>
+    <div id="pix-conteudo"></div>
+    <button class="btn-ghost" style="width:100%; margin-top:16px" onclick="fecharModalPix()">Fechar</button>
   </div>
 </div>
 
@@ -818,6 +867,8 @@ async function loadCompany() {
     renderCamposList();
 
     document.getElementById('webhook-url').value = company.webhookUrl || '';
+
+    atualizarBannerAssinatura(company);
   } catch (e) {
     showToast('Sessão expirada. Faça login novamente.');
     logout();
@@ -825,6 +876,97 @@ async function loadCompany() {
 }
 
 function capitalize(s) { return s ? s.charAt(0) + s.slice(1).toLowerCase() : s; }
+
+// ---------- Assinatura: banner de trial / expirado + checkout PIX ----------
+let pixPollingInterval = null;
+
+function atualizarBannerAssinatura(company) {
+  const banner = document.getElementById('trial-banner');
+  const text = document.getElementById('trial-banner-text');
+  const btn = document.getElementById('trial-banner-btn');
+
+  if (company.status === 'TRIAL') {
+    const dias = company.daysLeftInTrial ?? 0;
+    banner.className = 'trial-banner trial';
+    banner.style.display = 'flex';
+    text.textContent = dias > 0
+      ? `Período de teste: restam ${dias} dia${dias === 1 ? '' : 's'} grátis.`
+      : 'Seu período de teste está terminando.';
+    btn.textContent = 'Renovar agora';
+  } else if (company.status === 'EXPIRED' || company.status === 'BLOCKED') {
+    banner.className = 'trial-banner expired';
+    banner.style.display = 'flex';
+    text.textContent = 'Sua assinatura expirou — clientes não conseguem mais compartilhar dados com você via NFC/QR Code até renovar.';
+    btn.textContent = 'Renovar via PIX';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function abrirModalPix() {
+  document.getElementById('pix-modal-backdrop').classList.add('is-open');
+  gerarPix();
+}
+
+function fecharModalPix() {
+  document.getElementById('pix-modal-backdrop').classList.remove('is-open');
+  pararPollingPix();
+}
+
+async function gerarPix() {
+  const statusEl = document.getElementById('pix-status');
+  const conteudoEl = document.getElementById('pix-conteudo');
+  statusEl.textContent = 'Gerando cobrança PIX...';
+  conteudoEl.innerHTML = '';
+  pararPollingPix();
+
+  try {
+    const cobranca = await api('/companies/me/pix', { method: 'POST' });
+    statusEl.textContent = 'Escaneie o QR Code no app do seu banco ou copie o código PIX:';
+    const valor = (cobranca.valorCentavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    conteudoEl.innerHTML = `
+      <img class="pix-qr" src="data:image/png;base64,${cobranca.qrCodeBase64}" alt="QR Code PIX" />
+      <div class="pix-valor">${escapeHtml(valor)}</div>
+      <textarea class="pix-copia-cola" readonly onclick="this.select()">${escapeHtml(cobranca.qrCode)}</textarea>
+      <button class="btn-primary" style="width:100%" onclick="copiarPixCodigo('${cobranca.qrCode.replace(/'/g, "\\'")}')">Copiar código PIX</button>
+      <div class="pix-aguardando"><span class="pix-spinner"></span> Aguardando confirmação do pagamento...</div>
+    `;
+    iniciarPollingPix();
+  } catch (e) {
+    statusEl.textContent = '';
+    conteudoEl.innerHTML = `<div class="pix-erro">Não foi possível gerar a cobrança PIX agora: ${escapeHtml(e.message)}. Tente novamente em instantes.</div>`;
+  }
+}
+
+function copiarPixCodigo(codigo) {
+  navigator.clipboard.writeText(codigo).then(() => showToast('Código PIX copiado — cole no app do seu banco.'));
+}
+
+function iniciarPollingPix() {
+  pararPollingPix();
+  pixPollingInterval = setInterval(async () => {
+    try {
+      const company = await api('/companies/me');
+      if (company.status === 'ACTIVE') {
+        pararPollingPix();
+        document.getElementById('pix-status').textContent = '';
+        document.getElementById('pix-conteudo').innerHTML = '<div class="pix-sucesso">✓ Pagamento confirmado! Sua assinatura está ativa.</div>';
+        atualizarBannerAssinatura(company);
+        showToast('Pagamento confirmado — assinatura renovada!');
+        setTimeout(fecharModalPix, 2500);
+      }
+    } catch (e) {
+      // Falha de rede pontual no polling não interrompe a espera — só tenta de novo no próximo tick.
+    }
+  }, 5000);
+}
+
+function pararPollingPix() {
+  if (pixPollingInterval) {
+    clearInterval(pixPollingInterval);
+    pixPollingInterval = null;
+  }
+}
 
 // ---------- Dados da empresa / logo ----------
 function irParaDadosEmpresa() {
