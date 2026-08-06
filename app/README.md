@@ -182,19 +182,24 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
   teste foi encerrada (`DELETE /companies/me`) depois, e confirmei que o login dela
   passou a dar 401 "Esta conta foi encerrada.".
 
-- **`admin-dashboard.html`** — painel Super Admin: acesso por segredo compartilhado
-  (`X-ADMIN-SECRET`, guardado em `localStorage` depois do primeiro "Entrar" — mesmo
-  padrão MVP das outras telas, sem JWT). Cards de métricas no topo (`GET
-  /admin/dashboard-stats`: total de empresas, ativas, em teste, inadimplentes,
-  faturamento estimado, volume de pareamentos), um gráfico de barras horizontais
-  logo abaixo comparando Ativas/Em teste/Inadimplentes/Encerradas (mesmas cores das
-  badges de status da tabela, sem lib externa) e uma tabela com todas as empresas
-  (`GET /admin/companies`) com ações por linha: **Editar preço** (prompt em R$, `null`
-  se deixar em branco pra voltar ao padrão), **+15 dias** (soma trial e destrava sozinho
-  se a empresa estava `EXPIRED`), **Bloquear/Desbloquear** (alterna `status` pra
-  `BLOCKED`/`ACTIVE`) e **Excluir** (mesmo soft-delete de sempre, com modal de
-  confirmação — desabilitado pra empresas já encerradas). Se o segredo digitado estiver
-  errado, a própria chamada à API devolve `401` e a tela volta pro login com o aviso; se
+- **`admin-dashboard.html`** — painel Super Admin: acesso por segredo compartilhado,
+  enviado no header `x-admin-secret` em **toda** chamada (a função `api()` central
+  cuida disso sozinha) e guardado em `localStorage` (`fixopass_admin_secret`) depois
+  do primeiro "Entrar" — mesmo padrão MVP das outras telas, sem JWT. Sem segredo salvo,
+  a tela de login é o próprio estado inicial da página (não é um `prompt()` do
+  navegador). Login e boot validam via `POST /admin/auth` antes de carregar
+  qualquer dado; qualquer resposta `401` ou `403` de **qualquer** chamada (não só
+  o login) limpa o `localStorage` e devolve pra tela de login sozinho — cobre tanto
+  senha errada quanto um segredo revogado no meio da sessão. Cards de métricas no
+  topo (`GET /admin/dashboard-stats`: total de empresas, ativas, em teste,
+  inadimplentes, faturamento estimado, volume de pareamentos), um gráfico de barras
+  horizontais logo abaixo comparando Ativas/Em teste/Inadimplentes/Encerradas (mesmas
+  cores das badges de status da tabela, sem lib externa) e uma tabela com todas as
+  empresas (`GET /admin/companies`) com ações por linha: **Editar preço** (prompt em
+  R$, `null` se deixar em branco pra voltar ao padrão), **+15 dias** (soma trial e
+  destrava sozinho se a empresa estava `EXPIRED`), **Bloquear/Desbloquear** (alterna
+  `status` pra `BLOCKED`/`ACTIVE`) e **Excluir** (mesmo soft-delete de sempre, com
+  modal de confirmação — desabilitado pra empresas já encerradas). Se
   `ADMIN_SECRET` não estiver configurado no servidor (`503`), mostra uma mensagem
   específica em vez de "senha errada".
 

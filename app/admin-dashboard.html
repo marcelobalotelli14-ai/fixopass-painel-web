@@ -257,11 +257,11 @@ function showToast(msg) {
 
 async function api(path, options = {}) {
   const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
-  if (adminSecret) headers['X-ADMIN-SECRET'] = adminSecret;
+  if (adminSecret) headers['x-admin-secret'] = adminSecret;
   const res = await fetch(apiBase + path, Object.assign({}, options, { headers }));
   let body = null;
   try { body = await res.json(); } catch (e) { /* pode ser vazio */ }
-  if (res.status === 401) {
+  if (res.status === 401 || res.status === 403) {
     localStorage.removeItem('fixopass_admin_secret');
     adminSecret = null;
     mostrarLogin('Segredo de admin inválido — tente novamente.');
@@ -286,11 +286,13 @@ async function entrar() {
   if (!valor) { showToast('Informe o segredo de admin.'); return; }
   adminSecret = valor;
   try {
-    // Usa a própria listagem pra validar o segredo — se der 401, api() já
-    // volta pra tela de login sozinha; se der 503, avisa que o servidor
-    // ainda não está configurado (não é senha errada).
-    await carregarTudo();
+    // POST /admin/auth só valida o segredo (200 OK) sem precisar buscar
+    // stats/companies inteiros — se der 401/403, api() já limpa o
+    // localStorage e volta pra tela de login sozinha; se der 503, avisa que
+    // o servidor ainda não está configurado (não é senha errada).
+    await api('/admin/auth', { method: 'POST' });
     localStorage.setItem('fixopass_admin_secret', adminSecret);
+    await carregarTudo();
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
   } catch (e) {
@@ -474,15 +476,20 @@ async function confirmarExclusao() {
 }
 
 // ---------- Boot ----------
+// Se não houver segredo salvo no localStorage, fica na tela de login
+// (mostrarLogin() já é o estado inicial do HTML). Se houver, valida antes
+// de mostrar o painel — segredo revogado/errado cai no catch, api() já
+// limpa o localStorage e pede a senha de novo sozinho.
 (async function init() {
   if (!adminSecret) { mostrarLogin(); return; }
   try {
+    await api('/admin/auth', { method: 'POST' });
     await carregarTudo();
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
   } catch (e) {
-    // api() já cuida do 401 voltando pra tela de login; outros erros (ex.
-    // 503 de ADMIN_SECRET não configurado) também caem aqui.
+    // api() já cuida do 401/403 voltando pra tela de login; outros erros
+    // (ex. 503 de ADMIN_SECRET não configurado) também caem aqui.
     if (!document.getElementById('login-error').textContent) {
       mostrarLogin(e.message);
     }
