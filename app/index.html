@@ -292,6 +292,34 @@
     padding: 10px 12px; border-radius: 6px; font-size: 13px; margin: 14px 0; text-align: left;
   }
   .pix-sucesso { color: #8fd19e; font-size: 14px; font-weight: 600; margin: 14px 0; }
+
+  /* ---------- Integrações Web/API ---------- */
+  .redirect-textarea {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 13px;
+    width: 100%; resize: vertical;
+  }
+  .redirect-textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .integracao-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px; margin-bottom: 14px;
+  }
+  .integracao-card.revogada { opacity: 0.6; }
+  .integracao-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .integracao-nome { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+  .integracao-status {
+    font-size: 11px; padding: 3px 9px; border-radius: 20px; border: 1px solid; flex-shrink: 0;
+  }
+  .integracao-status.ativa { color: var(--accent); border-color: var(--accent); background: rgba(227,162,61,0.12); }
+  .integracao-status.revogada { color: #ffb3ab; border-color: var(--deny); background: rgba(193,85,75,0.12); }
+  .integracao-redirects { font-size: 12.5px; color: var(--text-dim); margin: 10px 0 4px; }
+  .integracao-redirects .redirect-uri { word-break: break-all; color: var(--text); margin-top: 4px; }
+  .integracao-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .integracao-actions button { padding: 8px 12px; font-size: 12px; }
+
   @media (max-width: 720px) {
     .shell { flex-direction: column; }
     .sidebar {
@@ -404,6 +432,7 @@
       <div class="nav-item" data-view="unidades" onclick="switchView('unidades')">Unidades &amp; QR Code</div>
       <div class="nav-item" data-view="compartilhamentos" onclick="switchView('compartilhamentos')">Compartilhamentos recebidos</div>
       <div class="nav-item" data-view="integracao" onclick="switchView('integracao')">Integração ERP</div>
+      <div class="nav-item" data-view="integracoes-web" onclick="switchView('integracoes-web')">Integrações (Web/API)</div>
       <div class="sidebar-footer">
         <div class="company-name" id="sidebar-company-name">—</div>
         <button class="btn-ghost" style="width:100%" onclick="logout()">Sair</button>
@@ -482,7 +511,7 @@
       <div class="view" id="view-campos">
         <button class="btn-ghost back-btn" onclick="switchView('overview')">&larr; Voltar</button>
         <h1 class="page-title">Campos solicitados</h1>
-        <div class="page-sub">Escolha quais dados sua empresa pede quando um cliente compartilha via NFC ou QR Code.</div>
+        <div class="page-sub">Escolha quais dados sua empresa pede quando um cliente compartilha via NFC, QR Code ou uma integração Web/API. Esses campos também são o teto do que qualquer integração pode solicitar — ver aba "Integrações (Web/API)".</div>
         <div class="panel">
           <h3>Configuração</h3>
           <div class="panel-sub">Marque "Liberado" para pedir o campo, e "Obrigatório" se o cliente precisa liberar para prosseguir.</div>
@@ -567,6 +596,37 @@ Header: X-API-KEY: &lt;sua API Key&gt;
           </div>
         </div>
       </div>
+
+      <!-- Integrações Web/API -->
+      <div class="view" id="view-integracoes-web">
+        <button class="btn-ghost back-btn" onclick="switchView('overview')">&larr; Voltar</button>
+        <h1 class="page-title">Integrações (Web/API)</h1>
+        <div class="page-sub">
+          Permita que um sistema externo — um cardápio online, e-commerce, ERP, sistema de hotel
+          ou condomínio — ofereça "Preencher com FIXO PASS" sem precisar de NFC, QR Code ou do
+          aplicativo. Cada integração tem seu próprio Client ID/Client Secret e só pode solicitar
+          os campos liberados em "Campos solicitados".
+        </div>
+
+        <div class="panel">
+          <h3>Nova integração</h3>
+          <div class="panel-sub">
+            Ex.: "Cardápio Online". O Client Secret aparece uma única vez, na criação — guarde-o
+            imediatamente no backend do seu sistema, nunca no navegador/JavaScript público.
+          </div>
+          <div class="field">
+            <label>Nome</label>
+            <input id="nova-integracao-nome" placeholder="Cardápio Online" />
+          </div>
+          <div class="field">
+            <label>Redirect URIs (uma por linha)</label>
+            <textarea id="nova-integracao-redirect" rows="3" placeholder="https://seusite.com/fixopass/callback" class="redirect-textarea"></textarea>
+          </div>
+          <button class="btn-primary" onclick="criarIntegracao()">Criar integração</button>
+        </div>
+
+        <div id="integracoes-list"><div class="empty-state">Carregando...</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -578,6 +638,27 @@ Header: X-API-KEY: &lt;sua API Key&gt;
     <img id="qr-modal-img" src="" alt="QR Code da unidade" />
     <div class="token">Token: <span id="qr-modal-token" class="mono"></span></div>
     <button class="btn-ghost" style="width:100%; margin-top:16px" onclick="closeQrModal()">Fechar</button>
+  </div>
+</div>
+
+<!-- Modal: Client Secret revelado (criação/regeneração de integração Web/API) -->
+<div class="qr-modal-backdrop" id="integracao-secret-modal-backdrop" onclick="if(event.target===this) fecharModalIntegracaoSecret()">
+  <div class="qr-modal" style="max-width:420px; text-align:left">
+    <h3 style="margin-top:0">Guarde o Client Secret agora</h3>
+    <div class="panel-sub" style="margin-bottom:16px">
+      Ele não será mostrado novamente. Configure os dois valores no backend do seu sistema —
+      nunca em HTML, JavaScript público ou localStorage.
+    </div>
+    <div class="field">
+      <label>Client ID</label>
+      <code class="mono code-block" id="integracao-secret-clientid"></code>
+    </div>
+    <div class="field">
+      <label>Client Secret</label>
+      <code class="mono code-block" id="integracao-secret-clientsecret"></code>
+    </div>
+    <button class="btn-primary" style="width:100%" onclick="copiarClientSecret()">Copiar Client Secret</button>
+    <button class="btn-ghost" style="width:100%; margin-top:10px" onclick="fecharModalIntegracaoSecret()">Já guardei</button>
   </div>
 </div>
 
@@ -834,6 +915,7 @@ function switchView(view) {
   if (view === 'integracao') {
     document.getElementById('polling-example-url').textContent = apiBase;
   }
+  if (view === 'integracoes-web') loadIntegracoes();
 }
 
 async function loadCompany() {
@@ -1226,6 +1308,130 @@ async function verQr(unidadeId, nome, token) {
 }
 function closeQrModal() {
   document.getElementById('qr-modal-backdrop').style.display = 'none';
+}
+
+// ---------- Integrações Web/API ----------
+let integracoesCache = [];
+
+async function loadIntegracoes() {
+  const list = document.getElementById('integracoes-list');
+  list.innerHTML = '<div class="empty-state">Carregando...</div>';
+  try {
+    const integracoes = await api('/companies/me/integracoes');
+    integracoesCache = integracoes;
+    if (!integracoes || integracoes.length === 0) {
+      list.innerHTML = '<div class="empty-state">Nenhuma integração criada ainda. Crie a primeira acima.</div>';
+      return;
+    }
+    list.innerHTML = integracoes.map(i => {
+      const ativa = i.status === 'ATIVA';
+      const redirects = (i.redirectUris || []).map(u => `<div class="redirect-uri">${escapeHtml(u)}</div>`).join('') || '<div class="redirect-uri">Nenhuma cadastrada.</div>';
+      return `
+        <div class="integracao-card ${ativa ? '' : 'revogada'}">
+          <div class="integracao-header">
+            <div class="integracao-nome">${escapeHtml(i.nome)}</div>
+            <div class="integracao-status ${ativa ? 'ativa' : 'revogada'}">${ativa ? 'Ativa' : 'Revogada'}</div>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Client ID</label>
+            <code class="mono code-block">${escapeHtml(i.clientId)}</code>
+          </div>
+          <div class="integracao-redirects">
+            <label style="margin-bottom:4px">Redirect URIs</label>
+            ${redirects}
+          </div>
+          <div class="integracao-actions">
+            <button class="btn-ghost" data-action="copiar-client-id" data-integracao-id="${escapeHtml(i.id)}">Copiar Client ID</button>
+            ${ativa ? `
+              <button class="btn-ghost" data-action="regenerar-secret" data-integracao-id="${escapeHtml(i.id)}">Gerar novo Client Secret</button>
+              <button class="btn-deny" data-action="revogar" data-integracao-id="${escapeHtml(i.id)}">Revogar</button>
+            ` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state">Erro ao carregar integrações: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// Mesmo padrão de listener delegado usado em unidades-grid — evita
+// reconstruir onclick="..." com dados de usuário (nome da integração) toda
+// vez que a lista renderiza.
+document.getElementById('integracoes-list').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const integracao = integracoesCache.find(i => i.id === btn.dataset.integracaoId);
+  if (!integracao) return;
+
+  if (btn.dataset.action === 'copiar-client-id') {
+    navigator.clipboard.writeText(integracao.clientId).then(() => showToast('Client ID copiado.'));
+  }
+  if (btn.dataset.action === 'regenerar-secret') regenerarSecretIntegracao(integracao.id);
+  if (btn.dataset.action === 'revogar') revogarIntegracao(integracao.id, integracao.nome);
+});
+
+function parseRedirectUris(texto) {
+  return texto.split('\n').map(s => s.trim()).filter(Boolean);
+}
+
+async function criarIntegracao() {
+  const nome = document.getElementById('nova-integracao-nome').value.trim();
+  const redirectUris = parseRedirectUris(document.getElementById('nova-integracao-redirect').value);
+  if (!nome) { showToast('Informe o nome da integração.'); return; }
+  if (redirectUris.length === 0) { showToast('Informe ao menos uma Redirect URI.'); return; }
+  try {
+    const data = await api('/companies/me/integracoes', { method: 'POST', body: JSON.stringify({ nome, redirectUris }) });
+    document.getElementById('nova-integracao-nome').value = '';
+    document.getElementById('nova-integracao-redirect').value = '';
+    showToast('Integração criada.');
+    await loadIntegracoes();
+    abrirModalIntegracaoSecret(data.clientId, data.clientSecret);
+  } catch (e) {
+    showToast('Erro ao criar integração: ' + e.message);
+  }
+}
+
+async function regenerarSecretIntegracao(id) {
+  const confirmar = confirm(
+    'Gerar um novo Client Secret invalida o atual imediatamente — qualquer sistema usando o secret antigo vai parar de funcionar até você atualizar. Continuar?'
+  );
+  if (!confirmar) return;
+  try {
+    const data = await api(`/companies/me/integracoes/${id}/regenerate-secret`, { method: 'POST' });
+    const integracao = integracoesCache.find(i => i.id === id);
+    showToast('Novo Client Secret gerado.');
+    abrirModalIntegracaoSecret(integracao ? integracao.clientId : '', data.clientSecret);
+  } catch (e) {
+    showToast('Erro ao gerar novo secret: ' + e.message);
+  }
+}
+
+async function revogarIntegracao(id, nome) {
+  const confirmar = confirm(
+    `Revogar a integração "${nome}"? Ela para de funcionar imediatamente — o sistema que a usa não vai mais conseguir iniciar nem concluir novos compartilhamentos. O histórico é mantido.`
+  );
+  if (!confirmar) return;
+  try {
+    await api(`/companies/me/integracoes/${id}`, { method: 'DELETE' });
+    showToast('Integração revogada.');
+    loadIntegracoes();
+  } catch (e) {
+    showToast('Erro ao revogar: ' + e.message);
+  }
+}
+
+let lastClientSecret = '';
+function abrirModalIntegracaoSecret(clientId, clientSecret) {
+  lastClientSecret = clientSecret;
+  document.getElementById('integracao-secret-clientid').textContent = clientId;
+  document.getElementById('integracao-secret-clientsecret').textContent = clientSecret;
+  document.getElementById('integracao-secret-modal-backdrop').style.display = 'flex';
+}
+function fecharModalIntegracaoSecret() {
+  document.getElementById('integracao-secret-modal-backdrop').style.display = 'none';
+}
+function copiarClientSecret() {
+  navigator.clipboard.writeText(lastClientSecret).then(() => showToast('Client Secret copiado.'));
 }
 
 // ---------- Boot ----------

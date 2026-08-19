@@ -103,7 +103,7 @@
         <input type="password" id="login-senha" placeholder="••••••••" />
       </div>
       <button class="btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
-      <div class="switch-link">Ainda não tem conta? <a href="/app/register-user.html">Criar conta</a></div>
+      <div class="switch-link">Ainda não tem conta? <a id="link-criar-conta" href="/app/register-user.html">Criar conta</a></div>
     </div>
   </div>
 </div>
@@ -148,10 +148,19 @@ async function doLogin() {
     localStorage.setItem('fixopass_user_id', data.userId);
     localStorage.setItem('fixopass_user_nome', data.nomeCompleto || '');
     localStorage.setItem('fixopass_user_email', email);
-    location.href = '/app/user-dashboard.html';
+    location.href = destinoAposLogin();
   } catch (e) {
     showError(e.message);
   }
+}
+
+// Pra onde ir depois de logar: normalmente o painel do usuário, mas se
+// chegou aqui vindo de app/authorize.html (canal WEB/API — ex.: clicou em
+// "Preencher com FIXO PASS" num cardápio sem estar logado ainda), volta
+// pra lá em vez de "engolir" a solicitação em andamento.
+function destinoAposLogin() {
+  const redirect = new URLSearchParams(location.search).get('redirect');
+  return redirect ? decodeURIComponent(redirect) : '/app/user-dashboard.html';
 }
 
 // ---------- Boot ----------
@@ -161,9 +170,18 @@ if (new URLSearchParams(location.search).get('conta-excluida') === '1') {
   el.style.display = 'block';
 }
 
-// Já logado? Direto pro painel — sem tela de espera no meio do caminho.
+// Propaga o "voltar pra onde eu estava" também pro link de cadastro —
+// quem ainda não tem conta e chegou aqui pela authorize.html precisa
+// continuar pra lá depois de criar a conta, não só depois do login.
+const redirectParam = new URLSearchParams(location.search).get('redirect');
+if (redirectParam) {
+  document.getElementById('link-criar-conta').href = '/app/register-user.html?redirect=' + encodeURIComponent(redirectParam);
+}
+
+// Já logado? Direto pro destino (painel, ou de volta pra authorize.html) —
+// sem tela de espera no meio do caminho.
 if (localStorage.getItem('fixopass_user_id')) {
-  location.href = '/app/user-dashboard.html';
+  location.href = destinoAposLogin();
 }
 </script>
 </body>

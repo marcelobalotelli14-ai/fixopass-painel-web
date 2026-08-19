@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Autorizar compartilhamento — FIXO PASS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #10151b; --surface: #1a2129; --surface-2: #212b35; --border: #2e3944;
+    --text: #ece8df; --text-dim: #8b96a1; --accent: #e3a23d; --accent-ink: #2a1d08;
+    --deny: #c1554b; --radius: 10px;
+    --font-display: 'Space Grotesk', sans-serif; --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+  h2, .display { font-family: var(--font-display); letter-spacing: -0.01em; }
+  button {
+    font-family: var(--font-body); font-weight: 600; cursor: pointer;
+    border-radius: 6px; border: 1px solid transparent; padding: 12px 16px;
+    font-size: 14px; transition: transform .08s ease, filter .15s ease;
+  }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-ghost:hover { background: var(--surface-2); }
+
+  #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .auth-card {
+    width: 100%; max-width: 420px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 32px;
+  }
+  .brand { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 26px; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 8px; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; color: var(--accent-ink); font-size: 15px;
+  }
+  .brand-name { font-size: 17px; font-weight: 600; }
+
+  .sub { color: var(--text-dim); font-size: 14px; text-align: center; }
+  .error-banner {
+    background: rgba(193, 85, 75, 0.12); border: 1px solid var(--deny); color: #ffb3ab;
+    padding: 12px 14px; border-radius: 6px; font-size: 13.5px; margin-bottom: 4px; line-height: 1.5;
+  }
+
+  #consent-state h2 { margin: 0 0 4px; font-size: 21px; text-align: center; }
+  #consent-integracao { color: var(--text-dim); font-size: 13px; text-align: center; margin-bottom: 18px; }
+  .field-group-label {
+    font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em;
+    margin: 18px 0 8px;
+  }
+  .panel-note {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 14px; font-size: 13.5px; color: var(--text-dim); margin: 0 0 4px;
+  }
+  .campo-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 2px; border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .campo-row:last-child { border-bottom: none; }
+  .campo-check { color: var(--accent); font-weight: 700; }
+  .privacy-note {
+    font-size: 12px; color: var(--text-dim); line-height: 1.6; margin: 20px 0 22px;
+    padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  .consent-actions { display: flex; flex-direction: column; gap: 10px; }
+
+  #done-state .check {
+    width: 48px; height: 48px; border-radius: 50%; background: rgba(227,162,61,0.15); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+  }
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-mark">FP</div>
+      <div class="brand-name">FIXO PASS</div>
+    </div>
+
+    <!-- Carregando -->
+    <div id="loading-state">
+      <div class="sub">Carregando solicitação...</div>
+    </div>
+
+    <!-- Erro (link inválido, expirado, já respondido, falha de rede...) -->
+    <div id="error-state" style="display:none">
+      <div class="error-banner" id="error-banner"></div>
+    </div>
+
+    <!-- Tela de consentimento -->
+    <div id="consent-state" style="display:none">
+      <h2 id="consent-empresa">—</h2>
+      <div id="consent-integracao"></div>
+
+      <div class="panel-note" id="consent-purpose"></div>
+
+      <div class="field-group-label">Dados solicitados</div>
+      <div id="consent-campos"></div>
+
+      <div class="privacy-note">
+        Você escolhe quais informações compartilhar. O FIXO PASS não é um documento de
+        identidade e não substitui CPF, RG ou qualquer documento oficial — ele só facilita o
+        envio dos dados que você mesmo cadastrou, com sua autorização explícita.
+      </div>
+
+      <div class="consent-actions">
+        <button class="btn-primary" id="btn-autorizar" onclick="autorizar()">Autorizar e continuar</button>
+        <button class="btn-ghost" id="btn-negar" onclick="negar()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Concluído (aprovado ou negado) — some antes do redirect automático -->
+    <div id="done-state" style="display:none; text-align:center">
+      <div class="check">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div class="sub" id="done-message"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LABEL_CAMPO = {
+  NOME: 'Nome', TELEFONE: 'Telefone', EMAIL: 'E-mail', CPF: 'CPF', RG: 'RG',
+  DATA_NASCIMENTO: 'Data de nascimento', ENDERECO: 'Endereço', FOTO: 'Foto',
+};
+
+const apiBase = 'https://fixopass-backend-production.up.railway.app';
+const userId = localStorage.getItem('fixopass_user_id');
+const requestId = new URLSearchParams(location.search).get('requestId');
+
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]));
+}
+
+async function api(path, options = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (userId) headers['X-USER-ID'] = userId;
+  let res;
+  try {
+    res = await fetch(apiBase + path, Object.assign({}, options, { headers }));
+  } catch (networkErr) {
+    // fetch rejeita (sem status nenhum) em falha de rede de verdade — sem
+    // internet, DNS, CORS bloqueado antes da resposta. Diferente de um
+    // 4xx/5xx de verdade, tratado abaixo.
+    throw new Error('Falha de conexão com o servidor. Verifique sua internet e tente de novo.');
+  }
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* pode ser vazio */ }
+  if (!res.ok) {
+    throw new Error((body && body.error) || `Erro ${res.status}`);
+  }
+  return body;
+}
+
+function showState(state) {
+  ['loading', 'error', 'consent', 'done'].forEach((s) => {
+    document.getElementById(s + '-state').style.display = s === state ? 'block' : 'none';
+  });
+}
+
+function showErrorState(msg) {
+  document.getElementById('error-banner').textContent = msg;
+  showState('error');
+}
+
+async function carregarSolicitacao() {
+  if (!requestId) {
+    showErrorState('Este link não é válido — nenhuma solicitação foi informada.');
+    return;
+  }
+  try {
+    const data = await api(`/integrations/authorize/${requestId}`);
+
+    if (data.status === 'EXPIRADA') {
+      showErrorState('Esta solicitação expirou. Volte ao sistema de origem e tente novamente.');
+      return;
+    }
+    if (data.status === 'APROVADA' || data.status === 'NEGADA') {
+      showErrorState('Esta solicitação já foi respondida.');
+      return;
+    }
+
+    document.getElementById('consent-empresa').textContent = `${data.empresa} solicita alguns dados`;
+    document.getElementById('consent-integracao').textContent = data.integracao ? `via ${data.integracao}` : '';
+    document.getElementById('consent-purpose').textContent = data.purpose || 'Preenchimento de dados.';
+    document.getElementById('consent-campos').innerHTML = (data.camposPedidos || []).map((c) => `
+      <div class="campo-row"><span>${escapeHtml(LABEL_CAMPO[c] || c)}</span><span class="campo-check">&#10003;</span></div>
+    `).join('') || '<div class="campo-row"><span>Nenhum campo específico pedido.</span></div>';
+
+    showState('consent');
+  } catch (e) {
+    showErrorState('Não foi possível carregar esta solicitação: ' + e.message);
+  }
+}
+
+function travarBotoes(textoBotao, ehAutorizar) {
+  document.getElementById('btn-autorizar').disabled = true;
+  document.getElementById('btn-negar').disabled = true;
+  document.getElementById(ehAutorizar ? 'btn-autorizar' : 'btn-negar').textContent = textoBotao;
+}
+
+async function autorizar() {
+  travarBotoes('Autorizando...', true);
+  try {
+    const resp = await api(`/integrations/authorize/${requestId}`, { method: 'POST', body: JSON.stringify({ aprovar: true }) });
+    concluir(resp, true);
+  } catch (e) {
+    showErrorState('Não foi possível concluir o compartilhamento: ' + e.message);
+  }
+}
+
+async function negar() {
+  travarBotoes('Cancelando...', false);
+  try {
+    const resp = await api(`/integrations/authorize/${requestId}`, { method: 'POST', body: JSON.stringify({ aprovar: false }) });
+    concluir(resp, false);
+  } catch (e) {
+    showErrorState('Não foi possível cancelar agora: ' + e.message);
+  }
+}
+
+// Mostra a confirmação na tela por um instante e, se a integração informou
+// pra onde voltar (redirectUri, validada pelo backend contra as URIs
+// cadastradas), redireciona sozinho — code/state/status na querystring,
+// NUNCA dados pessoais (ver POST /integrations/authorize/:id no backend).
+function concluir(resp, aprovou) {
+  document.getElementById('done-message').textContent = aprovou
+    ? 'Compartilhamento autorizado! Você já pode voltar ao sistema de origem.'
+    : 'Você cancelou o compartilhamento. Nenhum dado foi enviado — o preenchimento manual continua disponível.';
+  showState('done');
+
+  if (resp && resp.redirectUri) {
+    const url = new URL(resp.redirectUri);
+    url.searchParams.set('state', requestId);
+    if (aprovou && resp.code) {
+      url.searchParams.set('code', resp.code);
+    } else if (!aprovou) {
+      url.searchParams.set('status', 'denied');
+    }
+    setTimeout(() => { location.href = url.toString(); }, 900);
+  }
+}
+
+// ---------- Boot ----------
+if (!userId) {
+  // Sem sessão do FIXO PASS ainda — manda logar (ou criar conta) e volta
+  // pra cá depois, sem perder a solicitação em andamento.
+  const voltar = encodeURIComponent(location.pathname + location.search);
+  location.href = `/app/login.html?redirect=${voltar}`;
+} else {
+  carregarSolicitacao();
+}
+</script>
+</body>
+</html>
