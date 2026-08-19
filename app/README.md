@@ -2,12 +2,13 @@
 
 Frontend estático (HTML/CSS/JS puro, sem build step) que consome a API do `fixopass-backend`.
 
-Cinco páginas independentes, cada uma com seu próprio `apiBase` inline (sem módulo JS
+Seis páginas independentes, cada uma com seu próprio `apiBase` inline (sem módulo JS
 compartilhado, seguindo o padrão "sem build step" do projeto):
 
 - **`index.html`** — painel da empresa (B2B): login, cadastro de empresa
   (`POST /companies`), configuração de campos, unidades/QR Code, integração ERP,
-  banner de trial/assinatura e checkout PIX (ver seção própria abaixo).
+  banner de trial/assinatura e checkout PIX (ver seção própria abaixo), e a aba
+  **Integrações (Web/API)** (ver seção própria mais abaixo).
 - **`login.html`** — login do usuário comum (B2C): `POST /users/login`. Já logado,
   redireciona direto pra `user-dashboard.html` (sem tela de espera no meio do caminho).
 - **`register-user.html`** — cadastro do usuário comum (B2C): `POST /users` (mesmos
@@ -203,6 +204,25 @@ compartilhado, seguindo o padrão "sem build step" do projeto):
   `ADMIN_SECRET` não estiver configurado no servidor (`503`), mostra uma mensagem
   específica em vez de "senha errada".
 
+- **`authorize.html`** — tela de consentimento do canal WEB/API. Recebe `?requestId=`
+  (gerado por `POST /integrations/authorization-requests`, chamado pelo backend do sistema
+  externo — ex.: o cardápio online). Sem sessão do FIXO PASS ainda (`fixopass_user_id` no
+  `localStorage`), manda pra `login.html?redirect=<volta pra cá>` — e `login.html` propaga
+  esse `redirect` também pro link "Criar conta" (`register-user.html`) e pro botão de sucesso
+  do cadastro, então quem nunca teve conta consegue: criar conta → logar → cair de volta na
+  solicitação, sem perdê-la no meio do caminho. Já logado, busca `GET
+  /integrations/authorize/:requestId` (header `X-USER-ID`) e mostra empresa, integração,
+  finalidade e exatamente os campos pedidos (com ✓, sem toggle — a aprovação aqui é
+  tudo-ou-nada dos campos pedidos, mesmo padrão do mockup do produto). **Autorizar e
+  continuar** chama `POST /integrations/authorize/:requestId` `{ aprovar: true }` — a
+  resposta nunca inclui os dados, só um `code` de uso único; **Cancelar** chama o mesmo
+  endpoint com `{ aprovar: false }`. Nos dois casos, se a solicitação tiver uma
+  `redirectUri` (sempre tem, no canal WEB/API), volta sozinha pro sistema de origem com
+  `?code=...&state=<requestId>` (aprovado) ou `?status=denied&state=<requestId>` (negado) —
+  nunca com dado pessoal na URL. Solicitação expirada/já respondida/inexistente mostra uma
+  mensagem de erro específica, sem redirecionar sozinha (o sistema de origem não teria pra
+  onde levar o code mesmo).
+
 Todas as três telas de entrada (`index.html`, `login.html`, `register-user.html`) têm o
 mesmo seletor de perfil no topo do formulário — `[ Sou Cliente ] | [ Sou Empresa ]` —
 pra deixar óbvio pra quem chegou na página errada onde clicar, sem precisar ler nada.
@@ -249,6 +269,20 @@ python3 -m http.server 5500
   passam a falhar logo em seguida (login com `401 "Esta conta foi encerrada."`, API Key
   com `401`, QR Code com `404` — mesma mensagem de QR inválido, pra não vazar que a
   empresa existiu).
+- **Integrações (Web/API)** — terceiro canal de compartilhamento, além de NFC/QR Code:
+  permite que um sistema externo (cardápio online, e-commerce, ERP...) ofereça
+  "Preencher com FIXO PASS" sem precisar do app. Cria/lista/edita/revoga integrações
+  (`POST`/`GET`/`PUT`/`DELETE /companies/me/integracoes`), cada uma com seu próprio
+  **Client ID** (visível sempre) e **Client Secret** (só na criação/regeneração —
+  `POST .../regenerate-secret` — mesmo padrão da API Key: nunca reexibido depois). Redirect
+  URIs cadastradas por integração (uma por linha), que é o que o backend usa pra recusar
+  qualquer callback não autorizado (proteção contra open redirect). Os campos que uma
+  integração pode solicitar são sempre um subconjunto de "Campos solicitados" — não existe
+  configuração de campos separada por integração, de propósito: uma única fonte de verdade
+  pro que a empresa libera pedir, seja a solicitação via NFC, QR Code ou Web/API. Ver
+  `authorize.html` pra tela de consentimento que o cliente final vê, e o backend
+  (`fixopass-backend`, `src/routes/integrations.ts`) pra criação/troca do
+  `authorization_code`.
 
 ## Deixando o NFC funcionando de verdade (passo operacional, fora do software)
 
