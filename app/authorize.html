@@ -180,7 +180,7 @@ async function carregarSolicitacao() {
     return;
   }
   try {
-    const data = await api(`/integrations/authorize/${requestId}`);
+    const data = await api(`/oauth/authorize/${requestId}`);
 
     if (data.status === 'EXPIRADA') {
       showErrorState('Esta solicitação expirou. Volte ao sistema de origem e tente novamente.');
@@ -213,7 +213,7 @@ function travarBotoes(textoBotao, ehAutorizar) {
 async function autorizar() {
   travarBotoes('Autorizando...', true);
   try {
-    const resp = await api(`/integrations/authorize/${requestId}`, { method: 'POST', body: JSON.stringify({ aprovar: true }) });
+    const resp = await api(`/oauth/authorize/${requestId}`, { method: 'POST', body: JSON.stringify({ aprovar: true }) });
     concluir(resp, true);
   } catch (e) {
     showErrorState('Não foi possível concluir o compartilhamento: ' + e.message);
@@ -223,7 +223,7 @@ async function autorizar() {
 async function negar() {
   travarBotoes('Cancelando...', false);
   try {
-    const resp = await api(`/integrations/authorize/${requestId}`, { method: 'POST', body: JSON.stringify({ aprovar: false }) });
+    const resp = await api(`/oauth/authorize/${requestId}`, { method: 'POST', body: JSON.stringify({ aprovar: false }) });
     concluir(resp, false);
   } catch (e) {
     showErrorState('Não foi possível cancelar agora: ' + e.message);
@@ -233,7 +233,7 @@ async function negar() {
 // Mostra a confirmação na tela por um instante e, se a integração informou
 // pra onde voltar (redirectUri, validada pelo backend contra as URIs
 // cadastradas), redireciona sozinho — code/state/status na querystring,
-// NUNCA dados pessoais (ver POST /integrations/authorize/:id no backend).
+// NUNCA dados pessoais (ver POST /oauth/authorize/:id no backend).
 function concluir(resp, aprovou) {
   document.getElementById('done-message').textContent = aprovou
     ? 'Compartilhamento autorizado! Você já pode voltar ao sistema de origem.'
