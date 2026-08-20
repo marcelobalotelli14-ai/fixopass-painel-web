@@ -1016,7 +1016,13 @@ async function gerarPix() {
     iniciarPollingPix();
   } catch (e) {
     statusEl.textContent = '';
-    conteudoEl.innerHTML = `<div class="pix-erro">Não foi possível gerar a cobrança PIX agora: ${escapeHtml(e.message)}. Tente novamente em instantes.</div>`;
+    // Se o backend vazar o nome do gateway/variável de ambiente na mensagem de erro
+    // (ex.: "MERCADOPAGO_ACCESS_TOKEN ausente"), mostra um texto neutro em vez do
+    // detalhe técnico — a interface do Pagamento via PIX não cita gateway nenhum.
+    const mensagem = /mercadopago/i.test(e.message)
+      ? 'Pagamento via PIX ainda não está disponível no momento. Tente novamente em instantes ou fale com o suporte.'
+      : `Não foi possível gerar a cobrança PIX agora: ${e.message}. Tente novamente em instantes.`;
+    conteudoEl.innerHTML = `<div class="pix-erro">${escapeHtml(mensagem)}</div>`;
   }
 }
 
