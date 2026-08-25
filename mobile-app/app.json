@@ -1,51 +1,68 @@
-{
-    "expo": {
-          "name": "FIXO PASS",
-          "slug": "fixopass-app",
-          "version": "0.1.0",
-          "orientation": "portrait",
-          "userInterfaceStyle": "dark",
-          "backgroundColor": "#10151B",
-          "icon": "./assets/icon.png",
-          "splash": {
-                  "backgroundColor": "#10151B",
-                  "image": "./assets/splash.png"
-          },
-          "ios": {
-                  "supportsTablet": false,
-                  "bundleIdentifier": "com.fixopass.app",
-                  "buildNumber": "1",
-                  "infoPlist": {
-                            "NSCameraUsageDescription": "Usamos a câmera para ler o QR Code da empresa e liberar o compartilhamento dos seus dados.",
-                            "NFCReaderUsageDescription": "Usamos o NFC para identificar a empresa quando você aproxima o celular, sem precisar escanear QR Code."
-                  },
-                  "entitlements": {
-                            "com.apple.developer.nfc.readersession.formats": ["NDEF"]
-                  }
-          },
-          "android": {
-                  "package": "com.fixopass.app",
-                  "versionCode": 1,
-                  "permissions": ["CAMERA", "NFC", "POST_NOTIFICATIONS"],
-                  "adaptiveIcon": {
-                            "foregroundImage": "./assets/adaptive-icon.png",
-                            "backgroundColor": "#10151B"
-                  }
-          },
-          "plugins": [
-                  [
-                            "expo-camera",
-                            {
-                                        "cameraPermission": "Usamos a câmera para ler o QR Code da empresa e liberar o compartilhamento dos seus dados."
-                            }
-                  ],
-                  "react-native-nfc-manager",
-                  [
-                            "expo-notifications",
-                            {
-                                        "color": "#e3a23d"
-                            }
-                  ]
-          ]
-    }
+
+  
+  {
+  "expo": {
+    "name": "FIXO PASS",
+    "slug": "fixopass-app",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#10151B",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#10151B",
+      "image": "./assets/splash.png"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.fixopass.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Usamos a câmera para ler o QR Code da empresa e liberar o compartilhamento dos seus dados.",
+        "NFCReaderUsageDescription": "Usamos o NFC para identificar a empresa quando você aproxima o celular, sem precisar escanear QR Code."
+      },
+      "entitlements": {
+        "com.apple.developer.nfc.readersession.formats": [
+          "NDEF"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.fixopass.app",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "NFC",
+        "POST_NOTIFICATIONS",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.NFC"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#10151B"
+      }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Usamos a câmera para ler o QR Code da empresa e liberar o compartilhamento dos seus dados."
+        }
+      ],
+      "react-native-nfc-manager",
+      [
+        "expo-notifications",
+        {
+          "color": "#e3a23d"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0f725662-0e5e-442f-9539-a974a932af53"
+      }
+    },
+    "owner": "marcelobalotelli"
+  }
 }
