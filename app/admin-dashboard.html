@@ -102,6 +102,28 @@
     text-transform: uppercase; letter-spacing: .04em;
   }
 
+  /* ---------- Alertas operacionais (trial vencendo / inadimplência) ---------- */
+  .alerts-panel {
+    background: rgba(193, 85, 75, 0.08); border: 1px solid var(--deny); border-radius: var(--radius);
+    padding: 16px 20px; margin-bottom: 20px;
+  }
+  .alerts-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .alerts-count { font-size: 12.5px; color: var(--text-dim); }
+  .alerts-list { display: flex; flex-direction: column; gap: 8px; }
+  .alert-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; font-size: 13px;
+  }
+  .alert-row .alert-empresa { font-weight: 600; }
+  .alert-row .alert-detalhe { color: var(--text-dim); font-size: 12px; }
+  .alert-tag {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em;
+    padding: 3px 8px; border-radius: 5px; white-space: nowrap;
+  }
+  .alert-tag.tag-vencendo { background: rgba(227, 162, 61, 0.18); color: var(--accent); }
+  .alert-tag.tag-inadimplente { background: rgba(193, 85, 75, 0.18); color: #ffb3ab; }
+
   /* ---------- Gráfico: empresas por status ---------- */
   .bar-chart { display: flex; flex-direction: column; gap: 14px; }
   .bar-row { display: grid; grid-template-columns: 110px 1fr 40px; align-items: center; gap: 12px; }
@@ -118,10 +140,35 @@
   .bar-fill.st-teste { background: var(--accent); }
   .bar-fill.st-inadimplentes { background: var(--deny); }
   .bar-fill.st-encerradas { background: var(--text-dim); }
+
+  /* ---------- Série temporal de pareamentos ---------- */
+  .pairings-svg { width: 100%; height: 140px; overflow: visible; }
+  .pairings-svg .pairings-line { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .pairings-svg .pairings-area { fill: var(--accent); opacity: .12; }
+  .pairings-svg .pairings-dot { fill: var(--accent); }
+  .pairings-svg .pairings-axis-label { fill: var(--text-dim); font-size: 9px; font-family: var(--font-body); }
+  .pairings-empty { color: var(--text-dim); font-size: 13px; padding: 20px 0; text-align: center; }
+
+  /* ---------- Histórico/crescimento (item 8) ---------- */
+  .history-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .history-metric-label { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+  .history-metric-value { font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .companies-toolbar {
+    display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .companies-toolbar input { flex: 1 1 260px; }
+  .companies-toolbar select { flex: 0 1 190px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
   th, td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
   th { color: var(--text-dim); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--text); }
+  .sort-arrow { display: inline-block; margin-left: 4px; opacity: .7; }
   tr:last-child td { border-bottom: none; }
+  .companies-pager {
+    display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 14px; font-size: 13px;
+  }
+  .companies-pager .pager-info { color: var(--text-dim); }
   .badge {
     display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
   }
@@ -152,6 +199,31 @@
   .confirm-modal h3 { margin: 0 0 10px; font-size: 18px; }
   .confirm-modal p { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; margin: 0 0 16px; }
   .confirm-modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+
+  /* ---------- Detalhe de empresa (item 9 — aba Histórico) ---------- */
+  .detail-modal { max-width: 640px; max-height: 82vh; display: flex; flex-direction: column; }
+  .detail-modal h3 { margin: 0 0 4px; font-size: 18px; }
+  .detail-modal .detail-sub { font-size: 12.5px; color: var(--text-dim); margin-bottom: 16px; }
+  .detail-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .detail-tab {
+    background: transparent; border: none; border-bottom: 2px solid transparent; border-radius: 0;
+    color: var(--text-dim); padding: 8px 4px; margin-right: 16px; font-size: 13px; font-weight: 600;
+  }
+  .detail-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .detail-tab-panel { display: none; overflow-y: auto; }
+  .detail-tab-panel.active { display: block; }
+  .detail-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; font-size: 13px; }
+  .detail-info-grid .k { color: var(--text-dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; }
+  .detail-info-grid .v { font-weight: 600; margin-top: 2px; }
+  .log-row {
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 12.5px;
+  }
+  .log-row .log-top { display: flex; justify-content: space-between; color: var(--text-dim); margin-bottom: 6px; }
+  .log-row .log-campos { display: flex; flex-wrap: wrap; gap: 6px; }
+  .log-tag {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px;
+    padding: 2px 6px; font-size: 11px; color: var(--text-dim);
+  }
 
   @media (max-width: 720px) {
     .topbar, .container { padding-left: 16px; padding-right: 16px; }
@@ -185,6 +257,14 @@
   <div class="container">
     <h1 class="page-title">Visão geral</h1>
 
+    <div class="alerts-panel" id="alerts-panel" style="display:none">
+      <div class="alerts-header">
+        <h2 class="panel-title" style="margin:0">⚠ Alertas operacionais</h2>
+        <span class="alerts-count" id="alerts-count"></span>
+      </div>
+      <div class="alerts-list" id="alerts-list"></div>
+    </div>
+
     <div class="stat-grid" id="stat-grid">
       <div class="stat-card"><div class="num" id="stat-total">—</div><div class="label">Total de empresas</div></div>
       <div class="stat-card"><div class="num" id="stat-ativas">—</div><div class="label">Ativas</div></div>
@@ -199,25 +279,72 @@
       <div class="bar-chart" id="status-chart"></div>
     </div>
 
-    <div class="panel">
+    <div class="panel" style="margin-bottom: 20px">
+      <h2 class="panel-title">Pareamentos por dia (últimos 30 dias)</h2>
+      <div id="pairings-chart"></div>
+    </div>
+
+    <div class="panel" style="margin-bottom: 20px">
+      <h2 class="panel-title">Empresas por categoria</h2>
       <table>
         <thead>
           <tr>
-            <th>Empresa</th>
             <th>Categoria</th>
-            <th>Status</th>
+            <th>Total</th>
+            <th>Ativas</th>
+            <th>Faturamento estimado/mês</th>
+          </tr>
+        </thead>
+        <tbody id="categories-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel" style="margin-bottom: 20px">
+      <h2 class="panel-title">Crescimento (últimos 30 dias)</h2>
+      <div style="font-size:11.5px; color:var(--text-dim); margin-bottom:12px" id="history-aviso"></div>
+      <div id="history-chart"></div>
+    </div>
+
+    <div class="panel">
+      <div class="companies-toolbar">
+        <input type="text" id="companies-search" placeholder="Buscar por nome, CNPJ ou e-mail..." oninput="onFiltroChange()" />
+        <select id="companies-filtro-status" onchange="onFiltroChange()">
+          <option value="">Todos os status</option>
+          <option value="ACTIVE">Ativa</option>
+          <option value="TRIAL">Trial</option>
+          <option value="EXPIRED">Expirada</option>
+          <option value="BLOCKED">Bloqueada</option>
+        </select>
+        <select id="companies-filtro-categoria" onchange="onFiltroChange()">
+          <option value="">Todas as categorias</option>
+          <option value="RESTAURANTE">Restaurante</option>
+          <option value="CONDOMINIO">Condomínio</option>
+          <option value="HOSPITAL">Hospital</option>
+          <option value="HOTEL">Hotel</option>
+          <option value="LOJA">Loja</option>
+          <option value="OUTROS">Outros</option>
+        </select>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="sortable" onclick="onOrdenarPor('nome')">Empresa<span class="sort-arrow" data-campo="nome"></span></th>
+            <th class="sortable" onclick="onOrdenarPor('categoria')">Categoria<span class="sort-arrow" data-campo="categoria"></span></th>
+            <th class="sortable" onclick="onOrdenarPor('status')">Status<span class="sort-arrow" data-campo="status"></span></th>
             <th>Trial</th>
-            <th>Próx. vencimento</th>
-            <th>Preço/mês</th>
+            <th class="sortable" onclick="onOrdenarPor('nextDueDate')">Próx. vencimento<span class="sort-arrow" data-campo="nextDueDate"></span></th>
+            <th class="sortable" onclick="onOrdenarPor('precoMensalCentavos')">Preço/mês<span class="sort-arrow" data-campo="precoMensalCentavos"></span></th>
+            <th class="sortable" onclick="onOrdenarPorClientSide('accessCount')" title="Ordenação só dentro da página atual">Pareamentos<span class="sort-arrow" data-campo-client="accessCount"></span></th>
             <th>Conta</th>
             <th>Ações</th>
           </tr>
         </thead>
         <tbody id="companies-tbody">
-          <tr><td colspan="8"><div class="empty-state">Carregando...</div></td></tr>
+          <tr><td colspan="9"><div class="empty-state">Carregando...</div></td></tr>
         </tbody>
       </table>
       <div style="font-size:11.5px; color:var(--text-dim); margin-top:12px">* preço customizado (diferente do padrão de R$29,90)</div>
+      <div class="companies-pager" id="companies-pager"></div>
     </div>
   </div>
 </div>
@@ -234,6 +361,23 @@
   </div>
 </div>
 
+<!-- Modal de detalhe de empresa (item 9 — inclui a aba Histórico) -->
+<div class="confirm-modal-backdrop" id="detalhe-modal-backdrop" onclick="if(event.target===this) fecharModalDetalhe()">
+  <div class="confirm-modal detail-modal">
+    <h3 id="detalhe-modal-nome"></h3>
+    <div class="detail-sub" id="detalhe-modal-sub"></div>
+    <div class="detail-tabs">
+      <button class="detail-tab active" data-tab="dados" onclick="trocarAbaDetalhe('dados')">Dados</button>
+      <button class="detail-tab" data-tab="historico" onclick="trocarAbaDetalhe('historico')">Histórico</button>
+    </div>
+    <div class="detail-tab-panel active" data-panel="dados" id="detalhe-panel-dados"></div>
+    <div class="detail-tab-panel" data-panel="historico" id="detalhe-panel-historico"></div>
+    <div class="confirm-modal-actions">
+      <button class="btn-ghost" style="flex:1" onclick="fecharModalDetalhe()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -241,6 +385,21 @@ const apiBase = 'https://fixopass-backend-production.up.railway.app';
 let adminSecret = localStorage.getItem('fixopass_admin_secret') || null;
 let companiesCache = [];
 let companyIdParaExcluir = null;
+
+// Estado da tabela de empresas (busca, filtros, ordenação e paginação) —
+// tudo mandado como querystring pra GET /admin/companies (item 3 do
+// roadmap admin). Debounce só na busca por texto, pra não disparar uma
+// requisição a cada tecla.
+const companiesState = {
+  search: '',
+  status: '',
+  categoria: '',
+  sortBy: 'createdAt',
+  order: 'desc',
+  page: 1,
+  pageSize: 20,
+};
+let companiesSearchDebounceTimer = null;
 
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
@@ -311,14 +470,255 @@ function sair() {
   mostrarLogin();
 }
 
+function montarQueryStringCompanies() {
+  const params = new URLSearchParams();
+  if (companiesState.search) params.set('search', companiesState.search);
+  if (companiesState.status) params.set('status', companiesState.status);
+  if (companiesState.categoria) params.set('categoria', companiesState.categoria);
+  params.set('sortBy', companiesState.sortBy);
+  params.set('order', companiesState.order);
+  params.set('page', String(companiesState.page));
+  params.set('pageSize', String(companiesState.pageSize));
+  return params.toString();
+}
+
 async function carregarTudo() {
-  const [stats, companies] = await Promise.all([
+  const [stats, companiesResp, alertsResp, pairingsResp, categoriesResp, historyResp] = await Promise.all([
     api('/admin/dashboard-stats'),
-    api('/admin/companies'),
+    api('/admin/companies?' + montarQueryStringCompanies()),
+    api('/admin/alerts'),
+    api('/admin/pairings-stats?days=30'),
+    api('/admin/categories-stats'),
+    api('/admin/dashboard-history?days=30'),
   ]);
   renderStats(stats);
-  companiesCache = companies;
-  renderCompanies(companies);
+  // Com page/pageSize na querystring, GET /admin/companies sempre devolve o
+  // objeto paginado ({ empresas, total, page, pageSize, totalPages }) — mas
+  // aceita também o array plano (comportamento de compatibilidade do
+  // endpoint quando chamado sem parâmetro nenhum), por segurança.
+  const empresas = Array.isArray(companiesResp) ? companiesResp : companiesResp.empresas;
+  const paginacao = Array.isArray(companiesResp) ? null : companiesResp;
+  companiesCache = empresas;
+  renderCompanies(empresas);
+  renderSortArrows();
+  renderPager(paginacao);
+  renderAlerts(alertsResp);
+  renderPairingsChart(pairingsResp);
+  renderCategoriesStats(categoriesResp);
+  renderHistoryChart(historyResp);
+}
+
+// Mesmos rótulos em português já usados nos dropdowns de filtro da tabela
+// de empresas — mantém a categoria como enum (UPPER_CASE) só no que trafega
+// com o backend, nunca no que o usuário vê.
+const categoriaLabels = {
+  RESTAURANTE: 'Restaurante', CONDOMINIO: 'Condomínio', HOSPITAL: 'Hospital',
+  HOTEL: 'Hotel', LOJA: 'Loja', OUTROS: 'Outros',
+};
+
+function renderCategoriesStats(categoriesResp) {
+  const tbody = document.getElementById('categories-tbody');
+  const categorias = categoriesResp.categorias || [];
+  tbody.innerHTML = categorias.map((c) => `
+    <tr>
+      <td>${categoriaLabels[c.categoria] || escapeHtml(c.categoria)}</td>
+      <td>${c.totalEmpresas}</td>
+      <td>${c.ativas}</td>
+      <td>${formatMoney(c.faturamentoEstimadoCentavos)}</td>
+    </tr>
+  `).join('');
+}
+
+// Sparkline em SVG puro (sem lib externa) reaproveitado pelos gráficos de
+// pareamentos (item 6) e de histórico/crescimento (item 8) — recebe
+// [{data:'AAAA-MM-DD', valor:n}, ...] já denso (um ponto por dia, sem
+// buracos) e devolve o markup do <svg>. `sempreMostrarPonto:true` desenha
+// círculo em todo ponto (útil pra série cumulativa, que não tem "dias
+// vazios" de verdade — ela só não decresce).
+function buildSparklineSvg(pontos, { sempreMostrarPonto = false } = {}) {
+  const w = 760, h = 130, padY = 14;
+  const max = Math.max(1, ...pontos.map((p) => p.valor));
+  const stepX = pontos.length > 1 ? w / (pontos.length - 1) : 0;
+  const y = (v) => h - padY - (v / max) * (h - padY * 2);
+
+  const coords = pontos.map((p, i) => [i * stepX, y(p.valor)]);
+  const linePath = coords.map(([x, yy], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${yy.toFixed(1)}`).join(' ');
+  const areaPath = `${linePath} L${coords[coords.length - 1][0].toFixed(1)},${h} L0,${h} Z`;
+
+  // Rótulo de data a cada ~5 pontos (mais ou menos 6 rótulos no eixo, pra
+  // não sobrepor texto num range de 30 dias).
+  const passoRotulo = Math.max(1, Math.round(pontos.length / 6));
+  const rotulos = pontos.map((p, i) => ({ i, texto: formatDate(p.data + 'T00:00:00') }))
+    .filter((r) => r.i % passoRotulo === 0 || r.i === pontos.length - 1);
+
+  return `
+    <svg class="pairings-svg" viewBox="0 0 ${w} ${h + 18}" preserveAspectRatio="none">
+      <path class="pairings-area" d="${areaPath}" />
+      <path class="pairings-line" d="${linePath}" />
+      ${coords.map(([x, yy], i) => (sempreMostrarPonto || pontos[i].valor > 0) ? `<circle class="pairings-dot" cx="${x.toFixed(1)}" cy="${yy.toFixed(1)}" r="2.5"><title>${pontos[i].data}: ${pontos[i].valor}</title></circle>` : '').join('')}
+      ${rotulos.map((r) => `<text class="pairings-axis-label" x="${(r.i * stepX).toFixed(1)}" y="${h + 14}" text-anchor="middle">${r.texto}</text>`).join('')}
+    </svg>
+  `;
+}
+
+// `serie` já vem preenchida só nos dias com evento (GROUP BY não gera dia
+// vazio) — os dias sem pareamento aparecem como 0 aqui, preenchidos no
+// front, pra não quebrar a continuidade visual da linha.
+function renderPairingsChart(pairingsResp) {
+  const el = document.getElementById('pairings-chart');
+  const porDia = new Map((pairingsResp.serie || []).map((p) => [p.data, p.total]));
+  const dias = pairingsResp.diasConsiderados || 30;
+
+  const pontos = [];
+  for (let i = dias - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const chave = d.toISOString().slice(0, 10);
+    pontos.push({ data: chave, valor: porDia.get(chave) || 0 });
+  }
+
+  if (!pontos.some((p) => p.valor > 0)) {
+    el.innerHTML = '<div class="pairings-empty">Nenhum pareamento registrado no período.</div>';
+    return;
+  }
+
+  el.innerHTML = buildSparklineSvg(pontos);
+}
+
+// Item 8 — histórico calculado sob demanda (ver aviso/comentário do
+// endpoint GET /admin/dashboard-history). Só as duas séries reconstruíveis
+// com exatidão a partir de dados existentes: total de empresas cadastradas
+// (cumulativo, por createdAt) e total de pareamentos (cumulativo, por
+// LogAcesso) — nenhuma das duas decresce, então sempre mostra o ponto.
+function renderHistoryChart(historyResp) {
+  document.getElementById('history-aviso').textContent = historyResp.aviso || '';
+  const serie = historyResp.serie || [];
+  const el = document.getElementById('history-chart');
+
+  if (!serie.length) {
+    el.innerHTML = '<div class="pairings-empty">Sem dados suficientes no período.</div>';
+    return;
+  }
+
+  const pontosEmpresas = serie.map((p) => ({ data: p.data, valor: p.totalEmpresas }));
+  const pontosPareamentos = serie.map((p) => ({ data: p.data, valor: p.totalPareamentos }));
+  const ultimo = serie[serie.length - 1];
+
+  el.innerHTML = `
+    <div class="history-grid">
+      <div>
+        <div class="history-metric-label">Total de empresas cadastradas</div>
+        <div class="history-metric-value">${ultimo.totalEmpresas}</div>
+        ${buildSparklineSvg(pontosEmpresas, { sempreMostrarPonto: true })}
+      </div>
+      <div>
+        <div class="history-metric-label">Total de pareamentos (acumulado)</div>
+        <div class="history-metric-value">${ultimo.totalPareamentos}</div>
+        ${buildSparklineSvg(pontosPareamentos, { sempreMostrarPonto: true })}
+      </div>
+    </div>
+  `;
+}
+
+function renderAlerts(alertsResp) {
+  const painel = document.getElementById('alerts-panel');
+  const lista = document.getElementById('alerts-list');
+  const contador = document.getElementById('alerts-count');
+  const alertas = alertsResp.alertas || [];
+
+  if (!alertas.length) { painel.style.display = 'none'; return; }
+
+  painel.style.display = 'block';
+  contador.textContent = `${alertas.length} empresa${alertas.length === 1 ? '' : 's'} precisando de atenção`;
+  lista.innerHTML = alertas.map((a) => {
+    const vencendo = a.tipo === 'TRIAL_VENCENDO';
+    const tag = vencendo
+      ? `<span class="alert-tag tag-vencendo">Trial vencendo</span>`
+      : `<span class="alert-tag tag-inadimplente">${a.status === 'BLOCKED' ? 'Bloqueada' : 'Expirada'}</span>`;
+    const detalhe = vencendo
+      ? `${a.daysLeftInTrial} dia${a.daysLeftInTrial === 1 ? '' : 's'} restante${a.daysLeftInTrial === 1 ? '' : 's'} de trial`
+      : `Vencimento: ${formatDate(a.nextDueDate || a.trialEndsAt)}`;
+    return `
+      <div class="alert-row">
+        <div>
+          <div class="alert-empresa">${escapeHtml(a.nome)}</div>
+          <div class="alert-detalhe">${escapeHtml(a.emailContato)} · ${detalhe}</div>
+        </div>
+        ${tag}
+      </div>
+    `;
+  }).join('');
+}
+
+function onFiltroChange() {
+  companiesState.status = document.getElementById('companies-filtro-status').value;
+  companiesState.categoria = document.getElementById('companies-filtro-categoria').value;
+  companiesState.page = 1;
+
+  clearTimeout(companiesSearchDebounceTimer);
+  const termoBusca = document.getElementById('companies-search').value.trim();
+  companiesSearchDebounceTimer = setTimeout(() => {
+    companiesState.search = termoBusca;
+    carregarTudo().catch((e) => showToast('Erro ao filtrar empresas: ' + e.message));
+  }, 300);
+}
+
+function onOrdenarPor(campo) {
+  clientSortState.campo = null; // sort do servidor sobrepõe o client-side (só um ativo por vez)
+  if (companiesState.sortBy === campo) {
+    companiesState.order = companiesState.order === 'asc' ? 'desc' : 'asc';
+  } else {
+    companiesState.sortBy = campo;
+    companiesState.order = 'asc';
+  }
+  companiesState.page = 1;
+  carregarTudo().catch((e) => showToast('Erro ao ordenar empresas: ' + e.message));
+}
+
+// accessCount não é coluna de Company (é soma de Autorizacao agregada
+// depois da consulta — ver comentário em GET /admin/companies), então não
+// dá pra mandar como ?sortBy= pro backend sem SQL bruto. Ordena só as
+// linhas já carregadas na página atual, sem nova requisição.
+const clientSortState = { campo: null, order: 'desc' };
+
+function onOrdenarPorClientSide(campo) {
+  if (clientSortState.campo === campo) {
+    clientSortState.order = clientSortState.order === 'asc' ? 'desc' : 'asc';
+  } else {
+    clientSortState.campo = campo;
+    clientSortState.order = 'desc';
+  }
+  const ordenado = [...companiesCache].sort((a, b) => {
+    const diff = (a[campo] ?? 0) - (b[campo] ?? 0);
+    return clientSortState.order === 'asc' ? diff : -diff;
+  });
+  renderCompanies(ordenado);
+  renderSortArrows();
+}
+
+function irParaPagina(novaPagina) {
+  companiesState.page = novaPagina;
+  carregarTudo().catch((e) => showToast('Erro ao paginar empresas: ' + e.message));
+}
+
+function renderSortArrows() {
+  document.querySelectorAll('.sort-arrow').forEach((el) => {
+    el.textContent = el.dataset.campo === companiesState.sortBy ? (companiesState.order === 'asc' ? '▲' : '▼') : '';
+  });
+  document.querySelectorAll('[data-campo-client]').forEach((el) => {
+    el.textContent = el.dataset.campoClient === clientSortState.campo ? (clientSortState.order === 'asc' ? '▲' : '▼') : '';
+  });
+}
+
+function renderPager(paginacao) {
+  const el = document.getElementById('companies-pager');
+  if (!paginacao) { el.innerHTML = ''; return; }
+  const { page, totalPages, total } = paginacao;
+  el.innerHTML = `
+    <span class="pager-info">${total} empresa${total === 1 ? '' : 's'} — página ${page} de ${totalPages}</span>
+    <button class="btn-ghost" ${page <= 1 ? 'disabled' : ''} onclick="irParaPagina(${page - 1})">Anterior</button>
+    <button class="btn-ghost" ${page >= totalPages ? 'disabled' : ''} onclick="irParaPagina(${page + 1})">Próxima</button>
+  `;
 }
 
 function formatMoney(centavos) {
@@ -373,7 +773,7 @@ function formatDate(iso) {
 function renderCompanies(companies) {
   const tbody = document.getElementById('companies-tbody');
   if (!companies.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Nenhuma empresa cadastrada.</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state">Nenhuma empresa cadastrada.</div></td></tr>';
     return;
   }
   tbody.innerHTML = companies.map((c) => `
@@ -387,9 +787,11 @@ function renderCompanies(companies) {
       <td>${c.status === 'TRIAL' ? (c.daysLeftInTrial + ' dia' + (c.daysLeftInTrial === 1 ? '' : 's')) : '—'}</td>
       <td>${formatDate(c.nextDueDate)}</td>
       <td>${c.precoCustomizado ? formatMoney(c.precoMensalCentavos) + ' *' : formatMoney(c.precoMensalCentavos)}</td>
+      <td>${c.accessCount ?? 0}</td>
       <td>${c.ativa ? 'Ativa' : 'Encerrada'}</td>
       <td>
         <div class="row-actions">
+          <button class="btn-ghost" onclick="abrirModalDetalhe('${c.id}')">Detalhes</button>
           <button class="btn-ghost" onclick="editarPreco('${c.id}')">Editar preço</button>
           <button class="btn-ghost" onclick="adicionarDiasTrial('${c.id}')">+15 dias</button>
           <button class="btn-ghost" onclick="toggleBloqueio('${c.id}', '${c.status}')">${c.status === 'BLOCKED' ? 'Desbloquear' : 'Bloquear'}</button>
@@ -473,6 +875,71 @@ async function confirmarExclusao() {
     btn.disabled = false;
     btn.textContent = 'Sim, encerrar';
   }
+}
+
+// ---------- Detalhe de empresa (item 9 — aba Histórico via GET /admin/companies/:id/logs) ----------
+let detalheCompanyId = null;
+
+function abrirModalDetalhe(id) {
+  const company = companiesCache.find((c) => c.id === id);
+  if (!company) return;
+  detalheCompanyId = id;
+
+  document.getElementById('detalhe-modal-nome').textContent = company.nome;
+  document.getElementById('detalhe-modal-sub').textContent = company.emailContato;
+  document.getElementById('detalhe-panel-dados').innerHTML = `
+    <div class="detail-info-grid">
+      <div><div class="k">Categoria</div><div class="v">${categoriaLabels[company.categoria] || escapeHtml(company.categoria)}</div></div>
+      <div><div class="k">CNPJ</div><div class="v">${escapeHtml(company.cnpj)}</div></div>
+      <div><div class="k">Status</div><div class="v">${badgeStatus(company)}</div></div>
+      <div><div class="k">Conta</div><div class="v">${company.ativa ? 'Ativa' : 'Encerrada'}</div></div>
+      <div><div class="k">Preço/mês</div><div class="v">${formatMoney(company.precoMensalCentavos)}${company.precoCustomizado ? ' *' : ''}</div></div>
+      <div><div class="k">Pareamentos</div><div class="v">${company.accessCount ?? 0}</div></div>
+      <div><div class="k">Próx. vencimento</div><div class="v">${formatDate(company.nextDueDate)}</div></div>
+      <div><div class="k">Cadastrada em</div><div class="v">${formatDate(company.createdAt)}</div></div>
+      ${company.isTest ? '<div><div class="k">Marcação</div><div class="v">Empresa de teste</div></div>' : ''}
+    </div>
+  `;
+
+  document.getElementById('detalhe-panel-historico').innerHTML = '<div class="empty-state">Carregando...</div>';
+  trocarAbaDetalhe('dados');
+  document.getElementById('detalhe-modal-backdrop').classList.add('is-open');
+
+  api(`/admin/companies/${id}/logs`)
+    .then(renderHistoricoDetalhe)
+    .catch((e) => {
+      document.getElementById('detalhe-panel-historico').innerHTML =
+        `<div class="empty-state">Erro ao carregar histórico: ${escapeHtml(e.message)}</div>`;
+    });
+}
+
+function renderHistoricoDetalhe(logs) {
+  const el = document.getElementById('detalhe-panel-historico');
+  if (!logs.length) {
+    el.innerHTML = '<div class="empty-state">Nenhum compartilhamento registrado ainda.</div>';
+    return;
+  }
+  el.innerHTML = logs.map((log) => `
+    <div class="log-row">
+      <div class="log-top">
+        <span>${new Date(log.timestamp).toLocaleString('pt-BR')}</span>
+        <span>${escapeHtml(log.metodo)}${log.accessCount != null ? ` · ${log.accessCount}º pareamento` : ''}</span>
+      </div>
+      <div class="log-campos">
+        ${(log.camposRecebidos || []).map((campo) => `<span class="log-tag">${escapeHtml(campo)}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function trocarAbaDetalhe(aba) {
+  document.querySelectorAll('.detail-tab').forEach((el) => el.classList.toggle('active', el.dataset.tab === aba));
+  document.querySelectorAll('.detail-tab-panel').forEach((el) => el.classList.toggle('active', el.dataset.panel === aba));
+}
+
+function fecharModalDetalhe() {
+  document.getElementById('detalhe-modal-backdrop').classList.remove('is-open');
+  detalheCompanyId = null;
 }
 
 // ---------- Boot ----------

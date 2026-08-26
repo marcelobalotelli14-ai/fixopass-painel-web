@@ -166,6 +166,11 @@ async function doRegister() {
     return;
   }
   if (!payload.endereco) delete payload.endereco;
+  // Só grava origem explícita no fluxo de 1 clique vindo de app/authorize.html
+  // (canal WEB/API, identificado pelo ?redirect= propagado no boot). Os
+  // demais cadastros por esta mesma página (link direto "Criar conta")
+  // continuam no padrão MANUAL do backend.
+  if (redirectParam) payload.origem = 'LINK_WEB';
 
   try {
     await api('/users', { method: 'POST', body: JSON.stringify(payload) });
