@@ -300,6 +300,18 @@
     </div>
 
     <div class="panel" style="margin-bottom: 20px">
+      <h2 class="panel-title">Usuários finais (clientes)</h2>
+      <div class="stat-grid" id="users-stat-grid" style="margin-bottom: 20px">
+        <div class="stat-card"><div class="num" id="users-stat-total">—</div><div class="label">Total de usuários</div></div>
+        <div class="stat-card"><div class="num" id="users-stat-novos">—</div><div class="label" id="users-stat-novos-label">Novos no período</div></div>
+        <div class="stat-card"><div class="num" id="users-stat-ativos">—</div><div class="label">Ativos</div></div>
+        <div class="stat-card"><div class="num" id="users-stat-inativos">—</div><div class="label">Inativos</div></div>
+      </div>
+      <div style="font-size:11.5px; color:var(--text-dim); margin-bottom:12px">Distribuição por origem de cadastro</div>
+      <div class="bar-chart" id="users-origem-chart"></div>
+    </div>
+
+    <div class="panel" style="margin-bottom: 20px">
       <h2 class="panel-title">Crescimento (últimos 30 dias)</h2>
       <div style="font-size:11.5px; color:var(--text-dim); margin-bottom:12px" id="history-aviso"></div>
       <div id="history-chart"></div>
@@ -483,13 +495,14 @@ function montarQueryStringCompanies() {
 }
 
 async function carregarTudo() {
-  const [stats, companiesResp, alertsResp, pairingsResp, categoriesResp, historyResp] = await Promise.all([
+  const [stats, companiesResp, alertsResp, pairingsResp, categoriesResp, historyResp, usersStatsResp] = await Promise.all([
     api('/admin/dashboard-stats'),
     api('/admin/companies?' + montarQueryStringCompanies()),
     api('/admin/alerts'),
     api('/admin/pairings-stats?days=30'),
     api('/admin/categories-stats'),
     api('/admin/dashboard-history?days=30'),
+    api('/admin/users-stats'),
   ]);
   renderStats(stats);
   // Com page/pageSize na querystring, GET /admin/companies sempre devolve o
@@ -506,6 +519,7 @@ async function carregarTudo() {
   renderPairingsChart(pairingsResp);
   renderCategoriesStats(categoriesResp);
   renderHistoryChart(historyResp);
+  renderUsersStats(usersStatsResp);
 }
 
 // Mesmos rótulos em português já usados nos dropdowns de filtro da tabela
@@ -526,6 +540,35 @@ function renderCategoriesStats(categoriesResp) {
       <td>${c.ativas}</td>
       <td>${formatMoney(c.faturamentoEstimadoCentavos)}</td>
     </tr>
+  `).join('');
+}
+
+// Rótulos e cores (reaproveitando a mesma paleta usada no gráfico de
+// "Empresas por status") pra distribuição de usuários finais por origem
+// de cadastro — GET /admin/users-stats.
+const origemLabels = { QRCODE: 'QR Code', NFC: 'NFC', LINK_WEB: 'Link web', MANUAL: 'Manual' };
+const origemColors = { QRCODE: 'var(--ok)', NFC: 'var(--accent)', LINK_WEB: 'var(--text-dim)', MANUAL: 'var(--deny)' };
+
+function renderUsersStats(usersResp) {
+  document.getElementById('users-stat-total').textContent = usersResp.totalUsuarios ?? 0;
+  document.getElementById('users-stat-novos').textContent = usersResp.novosNoPeriodo ?? 0;
+  document.getElementById('users-stat-novos-label').textContent = `Novos (${usersResp.periodoDias ?? 30} dias)`;
+  document.getElementById('users-stat-ativos').textContent = usersResp.ativos ?? 0;
+  document.getElementById('users-stat-inativos').textContent = usersResp.inativos ?? 0;
+
+  const chartEl = document.getElementById('users-origem-chart');
+  const porOrigem = usersResp.porOrigem || [];
+  if (!usersResp.totalUsuarios || !porOrigem.length) {
+    chartEl.innerHTML = '<div class="pairings-empty">Nenhum usuário cadastrado ainda.</div>';
+    return;
+  }
+  const max = Math.max(1, ...porOrigem.map((o) => o.total));
+  chartEl.innerHTML = porOrigem.map((o) => `
+    <div class="bar-row" title="${origemLabels[o.origem] || o.origem}: ${o.total} usuário${o.total === 1 ? '' : 's'}">
+      <div class="bar-label">${origemLabels[o.origem] || escapeHtml(o.origem)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${((o.total / max) * 100).toFixed(1)}%; background:${origemColors[o.origem] || 'var(--text-dim)'}"></div></div>
+      <div class="bar-value">${o.total}</div>
+    </div>
   `).join('');
 }
 
